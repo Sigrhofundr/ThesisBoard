@@ -281,6 +281,14 @@ def parse_detail(html: str, pid: str) -> dict:
         val_cell = cells[1]
         val_text = normalize_text(val_cell.get_text(" ").replace("\xa0", " "))
 
+        # Alcune pagine riportano "Tesi esterna in azienda/estero" in una riga senza label.
+        if not key and val_text:
+            val_lower = val_text.lower()
+            if "azienda" in val_lower:
+                record["azienda"] = True
+            if "estero" in val_lower or val_cell.find("img", attrs={"alt": "estero"}):
+                record["estero"] = True
+
         if "riferimenti" in key and "esterni" not in key:
             # Relatori
             record["relatori"] = split_multi(val_text)
