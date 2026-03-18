@@ -149,6 +149,14 @@
         .relatori-list { list-style:none; display:flex; flex-direction:column; gap:0.25rem; }
         .relatore-item { display:flex; align-items:center; gap:0.45rem; font-size:0.9rem; font-weight:500; }
         .relatore-item::before { content:'•'; color:var(--primary); font-size:1.1rem; }
+        .relatore-link { color:var(--primary); text-decoration:none; font-weight:600; }
+        .relatore-link:hover { text-decoration:underline; }
+        .detail-warning {
+            margin-top:0.7rem;
+            font-size:0.78rem;
+            color:var(--text-muted);
+            line-height:1.45;
+        }
 
         /* ── Keywords ─────────────────────────────────────────── */
         .keywords { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:auto; }
@@ -514,6 +522,43 @@
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    function buildProfessorEmail(fullName) {
+        const raw = String(fullName || '').trim();
+        if (!raw) return '';
+
+        const normalized = raw
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^A-Za-z0-9\s']/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        if (!normalized) return '';
+
+        const tokens = normalized
+            .split(' ')
+            .map(t => t.replace(/[^A-Za-z0-9]/g, '').toLowerCase())
+            .filter(Boolean);
+
+        if (tokens.length < 2) return '';
+
+        const maybePortalOrder = raw === raw.toUpperCase();
+        let namePart = '';
+        let surnamePart = '';
+
+        if (maybePortalOrder) {
+            // Nei dati del portale compare spesso "COGNOME NOME" in maiuscolo.
+            namePart = tokens[tokens.length - 1];
+            surnamePart = tokens.slice(0, -1).join('');
+        } else {
+            namePart = tokens[0];
+            surnamePart = tokens.slice(1).join('');
+        }
+
+        if (!namePart || !surnamePart) return '';
+        return `${namePart}.${surnamePart}@polito.it`;
+    }
+
     // ── Render ─────────────────────────────────────────────────
     function renderGrid() {
         const titleQ    = fTitle.value.toLowerCase();
@@ -592,7 +637,11 @@
         }
 
         const relHtml = (t.relatori || [])
-            .map(r => `<li class="relatore-item">${esc(r)}</li>`).join('') ||
+            .map(r => {
+                const email = buildProfessorEmail(r);
+                if (!email) return `<li class="relatore-item">${esc(r)}</li>`;
+                return `<li class="relatore-item"><a class="relatore-link" href="mailto:${email}" title="Scrivi a ${esc(email)}">${esc(r)}</a></li>`;
+            }).join('') ||
             '<li class="relatore-item" style="color:var(--text-muted)">Nessun relatore</li>';
 
         const kwHtml = (t.keywords || [])
@@ -615,6 +664,7 @@
             <div class="detail-section">
                 <div class="detail-title">Relatori</div>
                 <ul class="relatori-list">${relHtml}</ul>
+                <div class="detail-warning">Gli indirizzi email sono generati automaticamente dal nome e potrebbero non essere corretti. Verifica sempre l'indirizzo prima di inviare.</div>
             </div>
 
             ${t.descrizione ? `
