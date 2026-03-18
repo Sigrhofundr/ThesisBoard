@@ -136,9 +136,41 @@
         .badge-azienda { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
         .badge-estero  { background:rgba(245,158,11,0.15);  color:#fbbf24; border:1px solid rgba(245,158,11,0.3); }
         .badge-scaduta { background:rgba(239,68,68,0.15);   color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+        .badge-allegati { background:rgba(59,130,246,0.15); color:#93c5fd; border:1px solid rgba(59,130,246,0.35); }
         [data-theme="light"] .badge-azienda { color:#059669; }
         [data-theme="light"] .badge-estero  { color:#d97706; }
         [data-theme="light"] .badge-scaduta { color:#dc2626; }
+        [data-theme="light"] .badge-allegati { color:#1d4ed8; }
+
+        .attachment-indicator {
+            display:inline-flex; align-items:center; justify-content:center;
+            margin-left:0.35rem;
+            color:var(--primary);
+            font-size:0.95rem;
+            vertical-align:top;
+        }
+
+        .attachment-hint {
+            display:inline-flex; align-items:center; gap:0.4rem;
+            margin-top:0.2rem;
+            font-size:0.78rem;
+            color:var(--text-muted);
+        }
+
+        .attachments-list {
+            list-style:none;
+            display:flex;
+            flex-direction:column;
+            gap:0.5rem;
+        }
+
+        .attachment-link {
+            color:var(--primary);
+            text-decoration:none;
+            font-weight:600;
+            word-break:break-word;
+        }
+        .attachment-link:hover { text-decoration:underline; }
 
         .fav-btn {
             width:1.9rem; height:1.9rem;
@@ -447,6 +479,17 @@
         const relatori = toArray(rec.relatori);
         const gruppi = toArray(rec.gruppi_ricerca);
         const keywords = toArray(rec.keywords);
+        const allegati = Array.isArray(rec.allegati)
+            ? rec.allegati
+                .map(a => {
+                    const entry = a && typeof a === 'object' ? a : {};
+                    const label = String(entry.label || '').trim();
+                    const url = String(entry.url || '').trim();
+                    if (!url) return null;
+                    return { label: label || url, url };
+                })
+                .filter(Boolean)
+            : [];
         const tipo = String(rec.tipo_tesi || '').trim();
         const scadenza = String(rec.scadenza || '').trim();
         const parsedDate = parseDateLoose(scadenza);
@@ -470,6 +513,7 @@
             competenze_richieste: String(rec.competenze_richieste || ''),
             gruppi_ricerca: gruppi,
             riferimenti_esterni: String(rec.riferimenti_esterni || ''),
+            allegati,
             link_polito: String(rec.link_polito || ''),
         };
     }
@@ -502,6 +546,7 @@
         if (t.scaduta)  badges.push('<span class="badge badge-scaduta">Scaduta</span>');
         if (t.azienda)  badges.push('<span class="badge badge-azienda">Azienda</span>');
         if (t.estero)   badges.push('<span class="badge badge-estero">Estero</span>');
+        if ((t.allegati || []).length) badges.push('<span class="badge badge-allegati" title="Questa tesi include link aggiuntivi (download o risorse esterne).">Link</span>');
 
         const relatoriHtml = (t.relatori || [])
             .map(r => `<li class="relatore-item">${esc(r)}</li>`).join('') ||
@@ -510,9 +555,11 @@
         const kwHtml = (t.keywords || [])
             .map(k => `<span class="keyword">${esc(k)}</span>`).join('');
 
+        const hasAttachments = (t.allegati || []).length > 0;
+
         card.innerHTML = `
             <div class="card-header">
-                <h3 class="card-title">${esc(t.titolo)}</h3>
+                <h3 class="card-title">${esc(t.titolo)}${hasAttachments ? '<span class="attachment-indicator" title="Questa tesi contiene link aggiuntivi (download o risorse esterne).">&#128206;</span>' : ''}</h3>
                 <div class="badges-top">
                     <button class="fav-btn ${favorite ? 'active' : ''}" title="${favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}" aria-label="Preferiti">${favorite ? '★' : '☆'}</button>
                     ${badges.join('')}
@@ -522,6 +569,7 @@
                 <div class="relatori-title">Relatori</div>
                 <ul class="relatori-list">${relatoriHtml}</ul>
             </div>
+            ${hasAttachments ? '<div class="attachment-hint" title="Questa tesi contiene link aggiuntivi (download o risorse esterne).">&#128206; Link aggiuntivi disponibili</div>' : ''}
             ${t.tipo_tesi ? `<div style="font-size:0.78rem;color:var(--text-muted)"><strong>Tipo:</strong> ${esc(t.tipo_tesi)}</div>` : ''}
             <div class="keywords">${kwHtml}</div>
         `;
@@ -648,6 +696,7 @@
         if (t.scaduta) badges.push('<span class="badge badge-scaduta">Scaduta</span>');
         if (t.azienda) badges.push('<span class="badge badge-azienda">Azienda</span>');
         if (t.estero)  badges.push('<span class="badge badge-estero">Estero</span>');
+        if ((t.allegati || []).length) badges.push('<span class="badge badge-allegati" title="Sono presenti link aggiuntivi (download o esterni).">Link</span>');
         modalBadges.innerHTML = badges.join('');
 
         if (t.link_polito) {
@@ -667,6 +716,20 @@
 
         const kwHtml = (t.keywords || [])
             .map(k => `<span class="keyword">${esc(k)}</span>`).join('');
+
+        const attachmentEntries = (t.allegati || []);
+        const hasDownloadLinks = attachmentEntries.some(a => /download_alleg/i.test(String(a.url || '')));
+        const attachmentsHtml = attachmentEntries
+            .map(a => {
+                const url = String(a.url || '');
+                const isDownload = /download_alleg/i.test(url);
+                const title = isDownload
+                    ? 'Link di download: potrebbe richiedere accesso al Portale della Didattica.'
+                    : 'Link esterno correlato alla tesi.';
+                const icon = isDownload ? '&#128206;' : '&#128279;';
+                return `<li><a class="attachment-link" href="${esc(url)}" target="_blank" rel="noopener" title="${title}">${icon} ${esc(a.label)}</a></li>`;
+            })
+            .join('');
 
         const grpText = (t.gruppi_ricerca || []).join('\n') || '';
 
@@ -706,10 +769,12 @@
                 <div class="detail-content">${esc(grpText)}</div>
             </div>` : ''}
 
-            ${t.riferimenti_esterni ? `
+            ${(attachmentsHtml || t.riferimenti_esterni) ? `
             <div class="detail-section">
                 <div class="detail-title">Vedi anche</div>
-                <div class="detail-content">${esc(t.riferimenti_esterni)}</div>
+                ${attachmentsHtml ? `<ul class="attachments-list">${attachmentsHtml}</ul>` : ''}
+                ${t.riferimenti_esterni ? `<div class="detail-content" style="margin-top:${attachmentsHtml ? '0.8rem' : '0'}">${esc(t.riferimenti_esterni)}</div>` : ''}
+                ${attachmentsHtml && hasDownloadLinks ? '<div class="detail-warning" style="margin-top:0.7rem">Alcuni link sono download del portale e potrebbero richiedere l\'accesso al Portale della Didattica.</div>' : ''}
             </div>` : ''}
 
             ${kwHtml ? `

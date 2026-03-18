@@ -18,6 +18,7 @@ import time
 import hashlib
 import requests
 from datetime import datetime
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 # ── Configurazione ────────────────────────────────────────────────────────────
@@ -330,6 +331,7 @@ def parse_detail(html: str, pid: str) -> dict:
         "competenze_richieste":"",
         "gruppi_ricerca":      [],
         "riferimenti_esterni": "",
+        "allegati":            [],
         "link_polito":         DETAIL_URL.format(pid=pid),
     }
 
@@ -394,6 +396,25 @@ def parse_detail(html: str, pid: str) -> dict:
 
         elif "vedi anche" in key or "riferimenti esterni" in key:
             record["riferimenti_esterni"] = val_text
+            links = []
+            for a in val_cell.find_all("a", href=True):
+                href = normalize_text(a.get("href", ""))
+                if not href:
+                    continue
+                links.append({
+                    "label": normalize_text(a.get_text(" ")) or href,
+                    "url": urljoin(BASE_URL, href),
+                })
+            # Rimuovi duplicati preservando l'ordine
+            seen = set()
+            deduped = []
+            for item in links:
+                key_link = (item["label"], item["url"])
+                if key_link in seen:
+                    continue
+                seen.add(key_link)
+                deduped.append(item)
+            record["allegati"] = deduped
 
         elif "scadenza" in key:
             record["scadenza"] = val_text
@@ -487,6 +508,7 @@ def main():
                 "scadenza": "", "scaduta": False,
                 "descrizione": "", "competenze_richieste": "",
                 "gruppi_ricerca": [], "riferimenti_esterni": "",
+                "allegati": [],
                 "link_polito": DETAIL_URL.format(pid=pid),
             })
             if not already_exists:
