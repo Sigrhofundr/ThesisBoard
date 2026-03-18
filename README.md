@@ -69,5 +69,6 @@ Then open `index.html` in your browser.
 ## Notes
 
 - `data.js` is generated from `update_tesi.py`; rerun the script whenever you want fresh data.
+- Warning: run `update_tesi.py` frequently (ideally daily), because new thesis proposals can be published every day and existing ones can expire daily.
 - The detail HTML cache is stored locally in `dettagli_html/` and is ignored by Git.
 - Session cookies expire; update `.env` when needed.

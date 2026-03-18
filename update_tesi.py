@@ -12,8 +12,10 @@ Esecuzioni successive rilevano automaticamente .env (POLITO_COOKIE).
 import os
 import re
 import sys
+import argparse
 import json
 import time
+import hashlib
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -27,6 +29,7 @@ COOKIE_FILE    = os.path.join(os.path.dirname(__file__), "cookie.txt")
 ENV_FILE       = os.path.join(os.path.dirname(__file__), ".env")
 ENV_COOKIE_KEY = "POLITO_COOKIE"
 JS_FILE        = os.path.join(os.path.dirname(__file__), "data.js")
+CACHE_META_FILE= os.path.join(HTML_DIR, "_cache_meta.json")
 REQUEST_DELAY  = 1  # secondi tra le richieste
 
 # ── Keyword automatiche ───────────────────────────────────────────────────────
@@ -95,6 +98,43 @@ def extract_cached_title(html: str) -> str:
     if not tit:
         return ""
     return normalize_text(tit.get_text(" "))
+
+def extract_last_update_marker(html: str) -> str:
+    """Prova a estrarre un campo di ultimo aggiornamento dalla pagina, se presente."""
+    soup = BeautifulSoup(html, "html.parser")
+    table = soup.find("table")
+    if table:
+        for row in table.find_all("tr"):
+            cells = row.find_all("td")
+            if len(cells) < 2:
+                continue
+            key = normalize_text(cells[0].get_text(" ")).lower()
+            if any(k in key for k in ("aggiornamento", "last update", "ultimo update")):
+                return normalize_text(cells[1].get_text(" "))
+
+    text = soup.get_text(" ", strip=True)
+    m = re.search(r"(?:Ultimo\s+aggiornamento|Data\s+aggiornamento|Last\s+update)\s*:?\s*([^\s].{0,40})", text, re.IGNORECASE)
+    if m:
+        return normalize_text(m.group(1))
+    return ""
+
+def html_digest(html: str) -> str:
+    return hashlib.sha256(html.encode("utf-8", errors="ignore")).hexdigest()
+
+def load_cache_meta() -> dict:
+    if not os.path.exists(CACHE_META_FILE):
+        return {}
+    try:
+        with open(CACHE_META_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+def save_cache_meta(meta: dict) -> None:
+    os.makedirs(HTML_DIR, exist_ok=True)
+    with open(CACHE_META_FILE, "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
 
 def load_cookie_from_env_file() -> str:
     if not os.path.exists(ENV_FILE):
@@ -211,7 +251,12 @@ def fetch_list(cookie: str) -> list[dict]:
     return tesi
 
 # ── Download singola tesi ─────────────────────────────────────────────────────
-def fetch_detail_html(pid: str, cookie: str, expected_title: str = "") -> tuple[str | None, bool]:
+def fetch_detail_html(
+    pid: str,
+    cookie: str,
+    expected_title: str = "",
+    check_updates: bool = False,
+) -> tuple[str | None, bool, bool]:
     """Scarica la pagina di dettaglio di una tesi e la salva su disco."""
     os.makedirs(HTML_DIR, exist_ok=True)
     fpath = os.path.join(HTML_DIR, f"{pid}.html")
@@ -220,13 +265,37 @@ def fetch_detail_html(pid: str, cookie: str, expected_title: str = "") -> tuple[
         with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
             cached_html = f.read()
 
-        if expected_title:
-            cached_title = extract_cached_title(cached_html)
-            # Resume intelligente: se il titolo lista coincide col cached, saltiamo il download.
-            if cached_title and normalize_text(expected_title) == cached_title:
-                return cached_html, True
-        else:
-            return cached_html, True
+        cached_title = extract_cached_title(cached_html)
+        title_matches = (not expected_title) or (cached_title and normalize_text(expected_title) == cached_title)
+
+        if title_matches and not check_updates:
+            return cached_html, True, False
+
+        # Modalità check-updates: confronta marker di aggiornamento (se presente) o hash contenuto.
+        url = DETAIL_URL.format(pid=pid)
+        try:
+            resp = requests.get(url, headers=make_headers(cookie), timeout=20)
+            if resp.status_code == 200:
+                remote_html = resp.text
+                cached_marker = extract_last_update_marker(cached_html)
+                remote_marker = extract_last_update_marker(remote_html)
+                if cached_marker and remote_marker:
+                    changed = cached_marker != remote_marker
+                else:
+                    changed = html_digest(cached_html) != html_digest(remote_html)
+
+                if changed:
+                    with open(fpath, "w", encoding="utf-8") as f:
+                        f.write(remote_html)
+                    return remote_html, False, True
+
+                return cached_html, True, False
+            print(f"  [WARN] HTTP {resp.status_code} per p_id={pid} durante check aggiornamenti")
+        except requests.RequestException as e:
+            print(f"  [WARN] Errore rete per p_id={pid} durante check aggiornamenti: {e}")
+
+        # In caso di errore nel check, mantieni cache esistente.
+        return cached_html, True, False
 
     url = DETAIL_URL.format(pid=pid)
     try:
@@ -234,12 +303,12 @@ def fetch_detail_html(pid: str, cookie: str, expected_title: str = "") -> tuple[
         if resp.status_code == 200:
             with open(fpath, "w", encoding="utf-8") as f:
                 f.write(resp.text)
-            return resp.text, False
+            return resp.text, False, False
         else:
             print(f"  [WARN] HTTP {resp.status_code} per p_id={pid}")
     except requests.RequestException as e:
         print(f"  [WARN] Errore rete per p_id={pid}: {e}")
-    return None, False
+    return None, False, False
 
 # ── Parsing dettaglio ─────────────────────────────────────────────────────────
 def parse_detail(html: str, pid: str) -> dict:
@@ -349,7 +418,25 @@ def parse_detail(html: str, pid: str) -> dict:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
+    parser = argparse.ArgumentParser(description="Aggiorna proposte di tesi e genera data.js")
+    parser.add_argument(
+        "--check-updates",
+        action="store_true",
+        help="Rivalida anche i file già in cache: aggiorna solo le pagine realmente modificate",
+    )
+    parser.add_argument(
+        "--check-updates-active-only",
+        action="store_true",
+        help="Con --check-updates, rivalida solo le tesi non scadute (usa la cache per saltare le scadute)",
+    )
+    args = parser.parse_args()
+
+    if args.check_updates_active_only and not args.check_updates:
+        print("[WARN] --check-updates-active-only richiede --check-updates: abilito automaticamente --check-updates.")
+        args.check_updates = True
+
     cookie = load_or_ask_cookie()
+    cache_meta = load_cache_meta()
 
     # 1. Scarica lista
     tesi_list_meta = fetch_list(cookie)
@@ -357,13 +444,40 @@ def main():
     # 2. Scarica dettagli
     records = []
     total = len(tesi_list_meta)
+    updated_count = 0
+    skipped_expired_count = 0
     for i, meta in enumerate(tesi_list_meta, 1):
         pid = meta["pid"]
         fpath = os.path.join(HTML_DIR, f"{pid}.html")
         already_exists = os.path.exists(fpath) and os.path.getsize(fpath) > 500
         print(f"  [{i}/{total}] Tesi p_id={pid}", end="", flush=True)
 
-        html, used_cache = fetch_detail_html(pid, cookie, expected_title=meta.get("titolo_lista", ""))
+        if args.check_updates and args.check_updates_active_only and already_exists:
+            with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                cached_html = f.read()
+            cached_record = parse_detail(cached_html, pid)
+            if not cached_record["titolo"]:
+                cached_record["titolo"] = meta["titolo_lista"]
+
+            if cached_record["scaduta"]:
+                skipped_expired_count += 1
+                records.append(cached_record)
+                cache_meta[pid] = {
+                    "digest": html_digest(cached_html),
+                    "last_update_marker": extract_last_update_marker(cached_html),
+                    "scadenza": cached_record.get("scadenza", ""),
+                    "scaduta": cached_record.get("scaduta", False),
+                    "checked_at": datetime.now().isoformat(timespec="seconds"),
+                }
+                print(" - OK (cached, scaduta - check saltato)")
+                continue
+
+        html, used_cache, was_updated = fetch_detail_html(
+            pid,
+            cookie,
+            expected_title=meta.get("titolo_lista", ""),
+            check_updates=args.check_updates,
+        )
         if html is None:
             print(" - SKIP (errore download)")
             records.append({
@@ -384,10 +498,24 @@ def main():
             record["titolo"] = meta["titolo_lista"]
         records.append(record)
 
-        status = "cached" if used_cache else "scaricata"
+        cache_meta[pid] = {
+            "digest": html_digest(html),
+            "last_update_marker": extract_last_update_marker(html),
+            "scadenza": record.get("scadenza", ""),
+            "scaduta": record.get("scaduta", False),
+            "checked_at": datetime.now().isoformat(timespec="seconds"),
+        }
+
+        if was_updated:
+            updated_count += 1
+            status = "aggiornata"
+        else:
+            status = "cached" if used_cache else "scaricata"
         print(f" - OK ({status})")
         if not used_cache:
             time.sleep(REQUEST_DELAY)
+
+    save_cache_meta(cache_meta)
 
     # 3. Genera data.js
     # Prepara struttura pulita per il JS (rimuovi parole_chiave_raw)
@@ -403,6 +531,10 @@ def main():
         f.write(";\n")
 
     print(f"\n[OK] data.js generato con {len(js_records)} tesi → {JS_FILE}")
+    if args.check_updates:
+        print(f"[INFO] Check aggiornamenti completato: {updated_count} pagine aggiornate in cache.")
+    if args.check_updates and args.check_updates_active_only:
+        print(f"[INFO] Check limitato alle non scadute: {skipped_expired_count} tesi scadute saltate.")
     print("[OK] Apri index.html per visualizzare le tesi aggiornate.")
 
 if __name__ == "__main__":
