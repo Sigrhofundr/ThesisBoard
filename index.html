@@ -59,6 +59,19 @@
             padding:0.45rem 1rem; border-radius:20px; cursor:pointer; font-weight:500; transition:all 0.2s;
         }
         .theme-toggle:hover { background:var(--surface-hover); transform:translateY(-1px); }
+        .header-actions { display:flex; align-items:center; gap:0.55rem; }
+        .portal-link {
+            display:inline-flex; align-items:center;
+            background:var(--primary); color:#fff;
+            border:1px solid var(--primary);
+            padding:0.45rem 0.95rem;
+            border-radius:20px;
+            font-size:0.86rem;
+            font-weight:600;
+            text-decoration:none;
+            transition:all 0.2s;
+        }
+        .portal-link:hover { background:var(--primary-hover); border-color:var(--primary-hover); transform:translateY(-1px); }
 
         .container { max-width:1400px; margin:2rem auto; padding:0 5%; }
 
@@ -235,7 +248,15 @@
 
     <header>
         <h1>🎓 Thesis Hub</h1>
-        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🔆 Light Mode</button>
+        <div class="header-actions">
+            <a
+                class="portal-link"
+                href="https://didattica.polito.it/pls/portal30/sviluppo.pagine_studenti.tesi_proposte_cds"
+                target="_blank"
+                rel="noopener"
+            >Apri lista ufficiale tesi</a>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🔆 Light Mode</button>
+        </div>
     </header>
 
     <main class="container">
@@ -312,7 +333,7 @@
             <div class="modal-header">
                 <h2 class="modal-title" id="modalTitle"></h2>
                 <div class="badges-top" id="modalBadges"></div>
-                <a href="#" id="modalLink" class="modal-link" target="_blank" rel="noopener">Apri sul Portale DidatticA ↗</a>
+                <a href="#" id="modalLink" class="modal-link" target="_blank" rel="noopener">Apri sul Portale della Didattica ↗</a>
             </div>
             <div class="modal-body" id="modalBody"></div>
         </div>
