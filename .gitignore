@@ -1,0 +1,21 @@
+# Sensitive configuration
+.env
+cookie.txt
+
+# Python cache/bytecode
+*.pyc
+*.pyo
+*.pyd
+
+# Local generated scraping cache
+dettagli_html/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# guides for developing excluded
+procedures/
+
+# thesis data should not be loaded in the repository
+data.js
