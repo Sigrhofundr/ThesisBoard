@@ -900,24 +900,24 @@
             })
             .join('');
 
-        const grpText = (t.gruppi_ricerca || []).join('\n') || '';
+        const grpText = (th.gruppi_ricerca || []).join('\n') || '';
 
         modalBody.innerHTML = `
             <div class="detail-grid">
                 <div class="detail-section">
-                    <div class="detail-label">Tipo tesi</div>
-                    <div class="detail-value">${esc(t.tipo_tesi || '—')}</div>
+                    <div class="detail-label">${tr('detTipo')}</div>
+                    <div class="detail-value">${esc(th.tipo_tesi || '—')}</div>
                 </div>
                 <div class="detail-section">
-                    <div class="detail-label">Scadenza</div>
-                    <div class="detail-value" style="${t.scaduta ? 'color:#f87171' : ''}">${esc(t.scadenza || '—')}</div>
+                    <div class="detail-label">${tr('detScadenza')}</div>
+                    <div class="detail-value" style="${th.scaduta ? 'color:#f87171' : ''}">${esc(th.scadenza || '—')}</div>
                 </div>
             </div>
 
             <div class="detail-section">
-                <div class="detail-title">Relatori</div>
+                <div class="detail-title">${tr('detRelatori')}</div>
                 <ul class="relatori-list">${relHtml}</ul>
-                <div class="detail-warning">Gli indirizzi email sono generati automaticamente dal nome e potrebbero non essere corretti. Verifica sempre l'indirizzo prima di inviare.</div>
+                <div class="detail-warning">${currentLang === 'en' ? 'Email addresses are auto-generated and may be incorrect. Always verify before sending.' : "Gli indirizzi email sono generati automaticamente dal nome e potrebbero non essere corretti. Verifica sempre l'indirizzo prima di inviare."}</div>
             </div>
 
             ${th.descrizione ? `
