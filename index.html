@@ -136,10 +136,14 @@
         .badge-azienda { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
         .badge-estero  { background:rgba(245,158,11,0.15);  color:#fbbf24; border:1px solid rgba(245,158,11,0.3); }
         .badge-scaduta { background:rgba(239,68,68,0.15);   color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+        .badge-new     { background:rgba(34,197,94,0.2);    color:#4ade80; border:1px solid rgba(34,197,94,0.4); }
+        .badge-updated { background:rgba(168,85,247,0.2);   color:#c084fc; border:1px solid rgba(168,85,247,0.4); }
         .badge-allegati { background:rgba(59,130,246,0.15); color:#93c5fd; border:1px solid rgba(59,130,246,0.35); }
         [data-theme="light"] .badge-azienda { color:#059669; }
         [data-theme="light"] .badge-estero  { color:#d97706; }
         [data-theme="light"] .badge-scaduta { color:#dc2626; }
+        [data-theme="light"] .badge-new     { color:#16a34a; }
+        [data-theme="light"] .badge-updated { color:#7c3aed; }
         [data-theme="light"] .badge-allegati { color:#1d4ed8; }
 
         .attachment-indicator {
@@ -343,6 +347,12 @@
                     <label class="checkbox-group">
                         <input type="checkbox" id="filterPreferiti"> Solo preferite
                     </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="filterNew"> <span class="badge badge-new" style="font-size:0.65rem;">NEW</span>&nbsp;Solo nuove
+                    </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="filterUpdated"> <span class="badge badge-updated" style="font-size:0.65rem;">UPDATED</span>&nbsp;Solo aggiornate
+                    </label>
                 </div>
             </div>
         </div>
@@ -395,6 +405,8 @@
     const fAzienda     = document.getElementById('filterAzienda');
     const fEstero      = document.getElementById('filterEstero');
     const fPreferiti   = document.getElementById('filterPreferiti');
+    const fNew         = document.getElementById('filterNew');
+    const fUpdated     = document.getElementById('filterUpdated');
 
     const modalOverlay = document.getElementById('modalOverlay');
     const modalBox     = document.getElementById('modalBox');
@@ -515,6 +527,8 @@
             riferimenti_esterni: String(rec.riferimenti_esterni || ''),
             allegati,
             link_polito: String(rec.link_polito || ''),
+            is_new:     Boolean(rec.is_new),
+            is_updated: Boolean(rec.is_updated),
         };
     }
 
@@ -543,9 +557,11 @@
         const favorite = isFavorite(t);
 
         const badges = [];
-        if (t.scaduta)  badges.push('<span class="badge badge-scaduta">Scaduta</span>');
-        if (t.azienda)  badges.push('<span class="badge badge-azienda">Azienda</span>');
-        if (t.estero)   badges.push('<span class="badge badge-estero">Estero</span>');
+        if (t.is_new)    badges.push('<span class="badge badge-new">NEW</span>');
+        if (t.is_updated)badges.push('<span class="badge badge-updated">UPDATED</span>');
+        if (t.scaduta)   badges.push('<span class="badge badge-scaduta">Scaduta</span>');
+        if (t.azienda)   badges.push('<span class="badge badge-azienda">Azienda</span>');
+        if (t.estero)    badges.push('<span class="badge badge-estero">Estero</span>');
         if ((t.allegati || []).length) badges.push('<span class="badge badge-allegati" title="Questa tesi include link aggiuntivi (download o risorse esterne).">Link</span>');
 
         const relatoriHtml = (t.relatori || [])
@@ -639,6 +655,8 @@
         const onlyAz    = fAzienda.checked;
         const onlyEs    = fEstero.checked;
         const onlyFavs  = fPreferiti.checked;
+        const onlyNew     = fNew     ? fNew.checked     : false;
+        const onlyUpdated = fUpdated ? fUpdated.checked : false;
 
         const data = normalizedData.filter(t => {
             if (titleQ && !t.titolo.toLowerCase().includes(titleQ)) return false;
@@ -659,6 +677,8 @@
             if (expFilter === 'expired' && !t.scaduta) return false;
             if (onlyAz && !t.azienda) return false;
             if (onlyEs && !t.estero)  return false;
+            if (onlyNew     && !t.is_new)     return false;
+            if (onlyUpdated && !t.is_updated) return false;
             return true;
         });
 
@@ -693,6 +713,8 @@
         modalTitle.textContent = t.titolo;
 
         const badges = [];
+        if (t.is_new)    badges.push('<span class="badge badge-new">NEW</span>');
+        if (t.is_updated)badges.push('<span class="badge badge-updated">UPDATED</span>');
         if (t.scaduta) badges.push('<span class="badge badge-scaduta">Scaduta</span>');
         if (t.azienda) badges.push('<span class="badge badge-azienda">Azienda</span>');
         if (t.estero)  badges.push('<span class="badge badge-estero">Estero</span>');
@@ -801,7 +823,8 @@
 
     // ── Init ───────────────────────────────────────────────────
     [fTitle, fRelatore, fKeyword].forEach(el => el.addEventListener('input', renderGrid));
-    [fTipo, fGruppo, fScadenza, fAzienda, fEstero, fPreferiti].forEach(el => el.addEventListener('change', renderGrid));
+    [fTipo, fGruppo, fScadenza, fAzienda, fEstero, fPreferiti, fNew, fUpdated]
+        .filter(Boolean).forEach(el => el.addEventListener('change', renderGrid));
 
     window.addEventListener('DOMContentLoaded', () => {
         if (typeof tesiData === 'undefined' || !Array.isArray(tesiData) || !tesiData.length) {

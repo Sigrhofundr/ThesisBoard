@@ -63,7 +63,21 @@ def get_auto_keywords(text: str) -> list[str]:
     return found
 
 def normalize_text(value: str) -> str:
-    return re.sub(r"\s+", " ", (value or "")).strip()
+    """Rimuove spazi, tab e newline multipli riducendoli ad un singolo spazio."""
+    return re.sub(r"[ \t]+", " ", re.sub(r"\r\n|\r", "\n", (value or ""))).strip()
+
+def clean_long_text(value: str) -> str:
+    """Normalizza testi lunghi (descrizione, competenze): preserva i a-capo semantici
+    ma rimuove spazi/tab superflui all'interno di ogni riga."""
+    lines = (value or "").replace("\r\n", "\n").replace("\r", "\n").splitlines()
+    cleaned = []
+    for line in lines:
+        # rimuove spazi e tab multipli interni, poi strip di riga
+        clean_line = re.sub(r"[ \t]+", " ", line).strip()
+        cleaned.append(clean_line)
+    # collassa più righe vuote consecutive in una sola
+    result = re.sub(r"\n{3,}", "\n\n", "\n".join(cleaned))
+    return result.strip()
 
 def split_multi(value: str) -> list[str]:
     """Divide campi multipli con delimitatori eterogenei in modo robusto."""
@@ -383,10 +397,10 @@ def parse_detail(html: str, pid: str) -> dict:
         elif "descrizione" in key:
             for br in val_cell.find_all("br"):
                 br.replace_with("\n")
-            record["descrizione"] = val_cell.get_text().strip()
+            record["descrizione"] = clean_long_text(val_cell.get_text())
 
         elif "competenze" in key or "conoscenze" in key:
-            record["competenze_richieste"] = val_text
+            record["competenze_richieste"] = clean_long_text(val_text)
 
         elif "gruppi di ricerca" in key:
             links_gr = val_cell.find_all("a")
@@ -539,12 +553,55 @@ def main():
 
     save_cache_meta(cache_meta)
 
-    # 3. Genera data.js
-    # Prepara struttura pulita per il JS (rimuovi parole_chiave_raw)
+    # 3. Carica i PID presenti nel data.js precedente per determinare NEW/UPDATED
+    prev_pids: set[str] = set()
+    prev_data_by_pid: dict[str, dict] = {}
+    is_first_scan = not os.path.exists(JS_FILE)
+    if not is_first_scan:
+        try:
+            with open(JS_FILE, "r", encoding="utf-8") as f:
+                raw = f.read()
+            # Estrai il JSON dal file JS (rimuovi 'const tesiData = ' e ';')
+            json_str = re.sub(r"^\s*const\s+\w+\s*=\s*|;\s*$", "", raw, flags=re.DOTALL).strip()
+            prev_list = json.loads(json_str)
+            for item in prev_list:
+                pid_val = str(item.get("pid", ""))
+                if pid_val:
+                    prev_pids.add(pid_val)
+                    prev_data_by_pid[pid_val] = item
+        except Exception as e:
+            print(f"[WARN] Impossibile caricare data.js precedente per confronto: {e}")
+            is_first_scan = True
+
+    # 4. Genera data.js con flag is_new / is_updated
     js_records = []
+    new_count = upd_count = 0
     for r in records:
         jr = dict(r)
         jr.pop("parole_chiave_raw", None)
+        pid_str = str(r.get("pid", ""))
+
+        if is_first_scan:
+            jr["is_new"] = False
+            jr["is_updated"] = False
+        elif pid_str not in prev_pids:
+            jr["is_new"] = True
+            jr["is_updated"] = False
+            new_count += 1
+        else:
+            # Controlla se alcuni campi rilevanti sono cambiati
+            prev = prev_data_by_pid[pid_str]
+            changed_fields = ("titolo", "tipo_tesi", "scadenza", "descrizione",
+                              "competenze_richieste", "relatori", "keywords")
+            was_changed = any(
+                json.dumps(jr.get(f), sort_keys=True) != json.dumps(prev.get(f), sort_keys=True)
+                for f in changed_fields
+            )
+            jr["is_new"] = False
+            jr["is_updated"] = was_changed
+            if was_changed:
+                upd_count += 1
+
         js_records.append(jr)
 
     with open(JS_FILE, "w", encoding="utf-8") as f:
@@ -553,6 +610,8 @@ def main():
         f.write(";\n")
 
     print(f"\n[OK] data.js generato con {len(js_records)} tesi → {JS_FILE}")
+    if not is_first_scan:
+        print(f"[INFO] Δ scansione: {new_count} nuove, {upd_count} aggiornate.")
     if args.check_updates:
         print(f"[INFO] Check aggiornamenti completato: {updated_count} pagine aggiornate in cache.")
     if args.check_updates and args.check_updates_active_only:
