@@ -290,7 +290,10 @@
                 href="https://didattica.polito.it/pls/portal30/sviluppo.pagine_studenti.tesi_proposte_cds"
                 target="_blank"
                 rel="noopener"
+                id="portalLink"
+                data-i18n="portalLink"
             >Apri lista ufficiale tesi</a>
+            <button class="theme-toggle" onclick="toggleLang()" id="langBtn">🌐 English</button>
             <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🔆 Light Mode</button>
         </div>
     </header>
@@ -298,60 +301,60 @@
     <main class="container">
         <div class="filters">
             <div class="filter-group">
-                <label for="searchTitle">Titolo</label>
-                <input type="text" id="searchTitle" placeholder="Cerca nel titolo…">
+                <label for="searchTitle" data-i18n="labelTitolo">Titolo</label>
+                <input type="text" id="searchTitle" data-i18n-placeholder="phTitolo" placeholder="Cerca nel titolo…">
             </div>
 
             <div class="filter-group">
-                <label for="searchRelatore">Relatore</label>
-                <input type="text" id="searchRelatore" placeholder="Nome relatore…">
+                <label for="searchRelatore" data-i18n="labelRelatore">Relatore</label>
+                <input type="text" id="searchRelatore" data-i18n-placeholder="phRelatore" placeholder="Nome relatore…">
             </div>
 
             <div class="filter-group">
-                <label for="searchKeyword">Parola chiave</label>
-                <input type="text" id="searchKeyword" placeholder="Cerca nelle keyword…">
+                <label for="searchKeyword" data-i18n="labelKeyword">Parola chiave</label>
+                <input type="text" id="searchKeyword" data-i18n-placeholder="phKeyword" placeholder="Cerca nelle keyword…">
             </div>
 
             <div class="filter-group">
-                <label for="filterTipo">Tipo di tesi</label>
+                <label for="filterTipo" data-i18n="labelTipo">Tipo di tesi</label>
                 <select id="filterTipo">
-                    <option value="">Tutti i tipi</option>
+                    <option value="" data-i18n="optTipoAll">Tutti i tipi</option>
                 </select>
             </div>
 
             <div class="filter-group">
-                <label for="filterGruppo">Gruppo di ricerca</label>
+                <label for="filterGruppo" data-i18n="labelGruppo">Gruppo di ricerca</label>
                 <select id="filterGruppo">
-                    <option value="">Tutti i gruppi</option>
+                    <option value="" data-i18n="optGruppoAll">Tutti i gruppi</option>
                 </select>
             </div>
 
             <div class="filter-group">
-                <label for="filterScadenza">Scadenza</label>
+                <label for="filterScadenza" data-i18n="labelScadenza">Scadenza</label>
                 <select id="filterScadenza">
-                    <option value="active">Solo attive</option>
-                    <option value="all">Tutte</option>
-                    <option value="expired">Solo scadute</option>
+                    <option value="active" data-i18n="optScadActive">Solo attive</option>
+                    <option value="all"    data-i18n="optScadAll">Tutte</option>
+                    <option value="expired" data-i18n="optScadExp">Solo scadute</option>
                 </select>
             </div>
 
             <div class="filter-group" style="grid-column:1/-1;">
-                <label style="margin-bottom:0.3rem;">Tipo speciale</label>
+                <label style="margin-bottom:0.3rem;" data-i18n="labelSpeciale">Tipo speciale</label>
                 <div class="checkbox-row">
                     <label class="checkbox-group">
-                        <input type="checkbox" id="filterAzienda"> Solo tesi in Azienda
+                        <input type="checkbox" id="filterAzienda"> <span data-i18n="chkAzienda">Solo tesi in Azienda</span>
                     </label>
                     <label class="checkbox-group">
-                        <input type="checkbox" id="filterEstero"> Solo tesi all'Estero
+                        <input type="checkbox" id="filterEstero"> <span data-i18n="chkEstero">Solo tesi all'Estero</span>
                     </label>
                     <label class="checkbox-group">
-                        <input type="checkbox" id="filterPreferiti"> Solo preferite
+                        <input type="checkbox" id="filterPreferiti"> <span data-i18n="chkPreferiti">Solo preferite</span>
                     </label>
                     <label class="checkbox-group">
-                        <input type="checkbox" id="filterNew"> <span class="badge badge-new" style="font-size:0.65rem;">NEW</span>&nbsp;Solo nuove
+                        <input type="checkbox" id="filterNew"> <span class="badge badge-new" style="font-size:0.65rem;">NEW</span>&nbsp;<span data-i18n="chkNew">Solo nuove</span>
                     </label>
                     <label class="checkbox-group">
-                        <input type="checkbox" id="filterUpdated"> <span class="badge badge-updated" style="font-size:0.65rem;">UPDATED</span>&nbsp;Solo aggiornate
+                        <input type="checkbox" id="filterUpdated"> <span class="badge badge-updated" style="font-size:0.65rem;">UPDATED</span>&nbsp;<span data-i18n="chkUpdated">Solo aggiornate</span>
                     </label>
                 </div>
             </div>
@@ -360,22 +363,22 @@
         <div class="stats" id="statsCounter">Caricamento tesi…</div>
 
         <section class="favorites-section hidden" id="favoritesSection">
-            <h2 class="section-title">Preferite</h2>
+            <h2 class="section-title" data-i18n="sectionFavs">Preferite</h2>
             <div class="grid" id="favoritesGrid"></div>
         </section>
 
-        <h2 class="section-title">Tutte le tesi</h2>
+        <h2 class="section-title" data-i18n="sectionAll">Tutte le tesi</h2>
         <div class="grid" id="tesiGrid"></div>
     </main>
 
     <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="modalBox">
-            <button class="modal-close" id="modalCloseBtn" title="Chiudi">✕</button>
+            <button class="modal-close" id="modalCloseBtn" title="Close">✕</button>
             <div class="modal-header">
                 <h2 class="modal-title" id="modalTitle"></h2>
                 <div class="badges-top" id="modalBadges"></div>
-                <a href="#" id="modalLink" class="modal-link" target="_blank" rel="noopener">Apri sul Portale della Didattica ↗</a>
+                <a href="#" id="modalLink" class="modal-link" target="_blank" rel="noopener" data-i18n="modalPortalLink">Apri sul Portale della Didattica ↗</a>
             </div>
             <div class="modal-body" id="modalBody"></div>
         </div>
@@ -388,8 +391,149 @@
         const html = document.documentElement;
         const isDark = html.getAttribute('data-theme') === 'dark';
         html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        document.getElementById('themeBtn').textContent = isDark ? '🌙 Dark Mode' : '🔆 Light Mode';
+        document.getElementById('themeBtn').textContent = isDark ? tr('themeDark') : tr('themeLight');
     }
+
+    // ── i18n ────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+        it: {
+            portalLink:      'Apri lista ufficiale tesi',
+            langBtn:         '🌐 English',
+            themeLight:      '🔆 Light Mode',
+            themeDark:       '🌙 Dark Mode',
+            labelTitolo:     'Titolo',
+            labelRelatore:   'Relatore',
+            labelKeyword:    'Parola chiave',
+            labelTipo:       'Tipo di tesi',
+            labelGruppo:     'Gruppo di ricerca',
+            labelScadenza:   'Scadenza',
+            labelSpeciale:   'Tipo speciale',
+            phTitolo:        'Cerca nel titolo…',
+            phRelatore:      'Nome relatore…',
+            phKeyword:       'Cerca nelle keyword…',
+            optTipoAll:      'Tutti i tipi',
+            optGruppoAll:    'Tutti i gruppi',
+            optScadActive:   'Solo attive',
+            optScadAll:      'Tutte',
+            optScadExp:      'Solo scadute',
+            chkAzienda:      'Solo tesi in Azienda',
+            chkEstero:       "Solo tesi all'Estero",
+            chkPreferiti:    'Solo preferite',
+            chkNew:          'Solo nuove',
+            chkUpdated:      'Solo aggiornate',
+            sectionFavs:     'Preferite',
+            sectionAll:      'Tutte le tesi',
+            modalPortalLink: 'Apri sul Portale della Didattica ↗',
+            statsLoading:    'Caricamento tesi…',
+            statsResults:    (n, tot, favs) => `Risultati: ${n} su ${tot} tesi. Preferite: ${favs}.`,
+            statsFavs:       (n, tot, all) => `Risultati: ${n} preferite su ${tot} tesi filtrate (${all} totali).`,
+            noResults:       'Nessuna tesi trovata con i filtri correnti.',
+            noFavs:          'Nessuna tesi preferita trovata con i filtri correnti.',
+            noData:          'Errore: dati non trovati. Esegui update_tesi.py per generare data.js.',
+            relatori:        'Relatori',
+            tipo:            'Tipo:',
+            noRelatore:      'Nessun relatore',
+            detTipo:         'Tipo tesi',
+            detScadenza:     'Scadenza',
+            detRelatori:     'Relatori',
+            detDescrizione:  'Descrizione',
+            detCompetenze:   'Competenze / Conoscenze richieste',
+            detGruppi:       'Gruppi di ricerca',
+            detRiferimenti:  'Vedi anche',
+            detKeywords:     'Parole chiave',
+            favAdd:          'Aggiungi ai preferiti',
+            favRemove:       'Rimuovi dai preferiti',
+        },
+        en: {
+            portalLink:      'Open official thesis list',
+            langBtn:         '🌐 Italiano',
+            themeLight:      '🔆 Light Mode',
+            themeDark:       '🌙 Dark Mode',
+            labelTitolo:     'Title',
+            labelRelatore:   'Supervisor',
+            labelKeyword:    'Keyword',
+            labelTipo:       'Thesis type',
+            labelGruppo:     'Research group',
+            labelScadenza:   'Deadline',
+            labelSpeciale:   'Special filter',
+            phTitolo:        'Search in title…',
+            phRelatore:      'Supervisor name…',
+            phKeyword:       'Search keywords…',
+            optTipoAll:      'All types',
+            optGruppoAll:    'All groups',
+            optScadActive:   'Active only',
+            optScadAll:      'All',
+            optScadExp:      'Expired only',
+            chkAzienda:      'Company theses only',
+            chkEstero:       'Abroad theses only',
+            chkPreferiti:    'Favourites only',
+            chkNew:          'New only',
+            chkUpdated:      'Updated only',
+            sectionFavs:     'Favourites',
+            sectionAll:      'All theses',
+            modalPortalLink: 'Open on the Teaching Portal ↗',
+            statsLoading:    'Loading theses…',
+            statsResults:    (n, tot, favs) => `Results: ${n} of ${tot} theses. Favourites: ${favs}.`,
+            statsFavs:       (n, tot, all) => `Results: ${n} favourites of ${tot} filtered theses (${all} total).`,
+            noResults:       'No theses found with the current filters.',
+            noFavs:          'No favourite theses found with the current filters.',
+            noData:          'Error: data not found. Run update_tesi.py to generate data.js.',
+            relatori:        'Supervisors',
+            tipo:            'Type:',
+            noRelatore:      'No supervisor listed',
+            detTipo:         'Thesis type',
+            detScadenza:     'Deadline',
+            detRelatori:     'Supervisors',
+            detDescrizione:  'Description',
+            detCompetenze:   'Required skills / knowledge',
+            detGruppi:       'Research groups',
+            detRiferimenti:  'See also',
+            detKeywords:     'Keywords',
+            favAdd:          'Add to favourites',
+            favRemove:       'Remove from favourites',
+        },
+    };
+
+    let currentLang = localStorage.getItem('thesisLang') || 'it';
+
+    function tr(key) {
+        return (TRANSLATIONS[currentLang] || TRANSLATIONS.it)[key] || key;
+    }
+
+    function applyLang() {
+        // Static text nodes
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const val = tr(key);
+            if (typeof val === 'string') el.textContent = val;
+        });
+        // Placeholders
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            el.placeholder = tr(el.getAttribute('data-i18n-placeholder'));
+        });
+        // Lang button (shows the OTHER language you can switch to)
+        const langBtn = document.getElementById('langBtn');
+        if (langBtn) langBtn.textContent = tr('langBtn');
+        // Theme button label
+        const themeBtn = document.getElementById('themeBtn');
+        if (themeBtn) {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeBtn.textContent = isDark ? tr('themeDark') : tr('themeLight');
+        }
+        // Stats counter
+        if (statsCounter) statsCounter.textContent = tr('statsLoading');
+        // html lang attribute
+        document.documentElement.lang = currentLang;
+    }
+
+    function toggleLang() {
+        currentLang = currentLang === 'it' ? 'en' : 'it';
+        localStorage.setItem('thesisLang', currentLang);
+        applyLang();
+        renderGrid();   // re-render cards/modal so dynamic strings update
+    }
+
+
 
     // ── Elements ───────────────────────────────────────────────
     const grid         = document.getElementById('tesiGrid');
@@ -566,7 +710,7 @@
 
         const relatoriHtml = (t.relatori || [])
             .map(r => `<li class="relatore-item">${esc(r)}</li>`).join('') ||
-            '<li class="relatore-item" style="color:var(--text-muted)">Nessun relatore</li>';
+            `<li class="relatore-item" style="color:var(--text-muted)">${tr('noRelatore')}</li>`;
 
         const kwHtml = (t.keywords || [])
             .map(k => `<span class="keyword">${esc(k)}</span>`).join('');
@@ -575,18 +719,18 @@
 
         card.innerHTML = `
             <div class="card-header">
-                <h3 class="card-title">${esc(t.titolo)}${hasAttachments ? '<span class="attachment-indicator" title="Questa tesi contiene link aggiuntivi (download o risorse esterne).">&#128206;</span>' : ''}</h3>
+                <h3 class="card-title">${esc(t.titolo)}${hasAttachments ? '<span class="attachment-indicator" title="Questa tesi contiene link aggiuntivi.">&#128206;</span>' : ''}</h3>
                 <div class="badges-top">
-                    <button class="fav-btn ${favorite ? 'active' : ''}" title="${favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}" aria-label="Preferiti">${favorite ? '★' : '☆'}</button>
+                    <button class="fav-btn ${favorite ? 'active' : ''}" title="${favorite ? tr('favRemove') : tr('favAdd')}" aria-label="Preferiti">${favorite ? '★' : '☆'}</button>
                     ${badges.join('')}
                 </div>
             </div>
             <div class="relatori">
-                <div class="relatori-title">Relatori</div>
+                <div class="relatori-title">${tr('relatori')}</div>
                 <ul class="relatori-list">${relatoriHtml}</ul>
             </div>
-            ${hasAttachments ? '<div class="attachment-hint" title="Questa tesi contiene link aggiuntivi (download o risorse esterne).">&#128206; Link aggiuntivi disponibili</div>' : ''}
-            ${t.tipo_tesi ? `<div style="font-size:0.78rem;color:var(--text-muted)"><strong>Tipo:</strong> ${esc(t.tipo_tesi)}</div>` : ''}
+            ${hasAttachments ? `<div class="attachment-hint">&#128206; ${currentLang === 'en' ? 'Additional links available' : 'Link aggiuntivi disponibili'}</div>` : ''}
+            ${t.tipo_tesi ? `<div style="font-size:0.78rem;color:var(--text-muted)"><strong>${tr('tipo')}</strong> ${esc(t.tipo_tesi)}</div>` : ''}
             <div class="keywords">${kwHtml}</div>
         `;
 
@@ -695,59 +839,62 @@
 
         grid.innerHTML = '';
         if (visibleData.length === 0) {
-            grid.innerHTML = `<div class="no-results">${onlyFavs ? 'Nessuna tesi preferita trovata con i filtri correnti.' : 'Nessuna tesi trovata con i filtri correnti.'}</div>`;
+            grid.innerHTML = `<div class="no-results">${onlyFavs ? tr('noFavs') : tr('noResults')}</div>`;
         } else {
-            visibleData.forEach((t, i) => {
-                const c = buildCard(t);
+            visibleData.forEach((tesi, i) => {
+                const c = buildCard(tesi);
                 c.style.animationDelay = `${Math.min(i * 0.04, 0.5)}s`;
                 grid.appendChild(c);
             });
         }
+        const statsResultsFn = tr('statsResults');
+        const statsFavsFn    = tr('statsFavs');
         statsCounter.textContent = onlyFavs
-            ? `Risultati: ${visibleData.length} preferite su ${data.length} tesi filtrate (${normalizedData.length} totali).`
-            : `Risultati: ${data.length} su ${normalizedData.length} tesi. Preferite: ${favoriteData.length}.`;
+            ? statsFavsFn(visibleData.length, data.length, normalizedData.length)
+            : statsResultsFn(data.length, normalizedData.length, favoriteData.length);
     }
 
+
     // ── Modal ──────────────────────────────────────────────────
-    function openModal(t) {
-        modalTitle.textContent = t.titolo;
+    function openModal(th) {
+        modalTitle.textContent = th.titolo;
 
         const badges = [];
-        if (t.is_new)    badges.push('<span class="badge badge-new">NEW</span>');
-        if (t.is_updated)badges.push('<span class="badge badge-updated">UPDATED</span>');
-        if (t.scaduta) badges.push('<span class="badge badge-scaduta">Scaduta</span>');
-        if (t.azienda) badges.push('<span class="badge badge-azienda">Azienda</span>');
-        if (t.estero)  badges.push('<span class="badge badge-estero">Estero</span>');
-        if ((t.allegati || []).length) badges.push('<span class="badge badge-allegati" title="Sono presenti link aggiuntivi (download o esterni).">Link</span>');
+        if (th.is_new)    badges.push('<span class="badge badge-new">NEW</span>');
+        if (th.is_updated)badges.push('<span class="badge badge-updated">UPDATED</span>');
+        if (th.scaduta) badges.push('<span class="badge badge-scaduta">Scaduta</span>');
+        if (th.azienda) badges.push('<span class="badge badge-azienda">Azienda</span>');
+        if (th.estero)  badges.push('<span class="badge badge-estero">Estero</span>');
+        if ((th.allegati || []).length) badges.push('<span class="badge badge-allegati" title="Sono presenti link aggiuntivi (download o esterni).">Link</span>');
         modalBadges.innerHTML = badges.join('');
 
-        if (t.link_polito) {
-            modalLink.href = t.link_polito;
+        if (th.link_polito) {
+            modalLink.href = th.link_polito;
             modalLink.style.display = 'inline-block';
         } else {
             modalLink.style.display = 'none';
         }
 
-        const relHtml = (t.relatori || [])
+        const relHtml = (th.relatori || [])
             .map(r => {
                 const email = buildProfessorEmail(r);
                 if (!email) return `<li class="relatore-item">${esc(r)}</li>`;
                 return `<li class="relatore-item"><a class="relatore-link" href="mailto:${email}" title="Scrivi a ${esc(email)}">${esc(r)}</a></li>`;
             }).join('') ||
-            '<li class="relatore-item" style="color:var(--text-muted)">Nessun relatore</li>';
+            `<li class="relatore-item" style="color:var(--text-muted)">${tr('noRelatore')}</li>`;
 
-        const kwHtml = (t.keywords || [])
+        const kwHtml = (th.keywords || [])
             .map(k => `<span class="keyword">${esc(k)}</span>`).join('');
 
-        const attachmentEntries = (t.allegati || []);
+        const attachmentEntries = (th.allegati || []);
         const hasDownloadLinks = attachmentEntries.some(a => /download_alleg/i.test(String(a.url || '')));
         const attachmentsHtml = attachmentEntries
             .map(a => {
                 const url = String(a.url || '');
                 const isDownload = /download_alleg/i.test(url);
                 const title = isDownload
-                    ? 'Link di download: potrebbe richiedere accesso al Portale della Didattica.'
-                    : 'Link esterno correlato alla tesi.';
+                    ? tr('linkDownload')
+                    : tr('linkEsterno');
                 const icon = isDownload ? '&#128206;' : '&#128279;';
                 return `<li><a class="attachment-link" href="${esc(url)}" target="_blank" rel="noopener" title="${title}">${icon} ${esc(a.label)}</a></li>`;
             })
@@ -773,35 +920,35 @@
                 <div class="detail-warning">Gli indirizzi email sono generati automaticamente dal nome e potrebbero non essere corretti. Verifica sempre l'indirizzo prima di inviare.</div>
             </div>
 
-            ${t.descrizione ? `
+            ${th.descrizione ? `
             <div class="detail-section">
-                <div class="detail-title">Descrizione</div>
-                <div class="detail-content">${esc(t.descrizione)}</div>
+                <div class="detail-title">${tr('detDescrizione')}</div>
+                <div class="detail-content">${esc(th.descrizione)}</div>
             </div>` : ''}
 
-            ${t.competenze_richieste ? `
+            ${th.competenze_richieste ? `
             <div class="detail-section">
-                <div class="detail-title">Competenze / Conoscenze richieste</div>
-                <div class="detail-content">${esc(t.competenze_richieste)}</div>
+                <div class="detail-title">${tr('detCompetenze')}</div>
+                <div class="detail-content">${esc(th.competenze_richieste)}</div>
             </div>` : ''}
 
             ${grpText ? `
             <div class="detail-section">
-                <div class="detail-title">Gruppi di ricerca</div>
+                <div class="detail-title">${tr('detGruppi')}</div>
                 <div class="detail-content">${esc(grpText)}</div>
             </div>` : ''}
 
-            ${(attachmentsHtml || t.riferimenti_esterni) ? `
+            ${(attachmentsHtml || th.riferimenti_esterni) ? `
             <div class="detail-section">
-                <div class="detail-title">Vedi anche</div>
+                <div class="detail-title">${tr('detRiferimenti')}</div>
                 ${attachmentsHtml ? `<ul class="attachments-list">${attachmentsHtml}</ul>` : ''}
-                ${t.riferimenti_esterni ? `<div class="detail-content" style="margin-top:${attachmentsHtml ? '0.8rem' : '0'}">${esc(t.riferimenti_esterni)}</div>` : ''}
-                ${attachmentsHtml && hasDownloadLinks ? '<div class="detail-warning" style="margin-top:0.7rem">Alcuni link sono download del portale e potrebbero richiedere l\'accesso al Portale della Didattica.</div>' : ''}
+                ${th.riferimenti_esterni ? `<div class="detail-content" style="margin-top:${attachmentsHtml ? '0.8rem' : '0'}">${esc(th.riferimenti_esterni)}</div>` : ''}
+                ${attachmentsHtml && hasDownloadLinks ? `<div class="detail-warning" style="margin-top:0.7rem">${currentLang === 'en' ? "Some links are portal downloads and may require access to the Teaching Portal." : "Alcuni link sono download del portale e potrebbero richiedere l'accesso al Portale della Didattica."}</div>` : ''}
             </div>` : ''}
 
             ${kwHtml ? `
             <div class="detail-section">
-                <div class="detail-title">Parole chiave</div>
+                <div class="detail-title">${tr('detKeywords')}</div>
                 <div class="keywords">${kwHtml}</div>
             </div>` : ''}
         `;
@@ -827,8 +974,9 @@
         .filter(Boolean).forEach(el => el.addEventListener('change', renderGrid));
 
     window.addEventListener('DOMContentLoaded', () => {
+        applyLang();  // Apply i18n before rendering
         if (typeof tesiData === 'undefined' || !Array.isArray(tesiData) || !tesiData.length) {
-            grid.innerHTML = '<div class="no-results" style="color:#ef4444;">Errore: dati non trovati. Esegui update_tesi.py per generare data.js.</div>';
+            grid.innerHTML = `<div class="no-results" style="color:#ef4444;">${tr('noData')}</div>`;
             statsCounter.textContent = '';
             return;
         }
@@ -847,3 +995,4 @@
     </script>
 </body>
 </html>
+
