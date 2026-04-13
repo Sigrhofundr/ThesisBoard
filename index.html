@@ -300,6 +300,11 @@
 
     <main class="container">
         <div class="filters">
+            <div class="filter-group" style="grid-column:1/-1;">
+                <label for="searchGlobal" data-i18n="labelGlobal">Ricerca Globale (usa '-' per escludere)</label>
+                <input type="text" id="searchGlobal" data-i18n-placeholder="phGlobal" placeholder="es. robot -IA">
+            </div>
+
             <div class="filter-group">
                 <label for="searchTitle" data-i18n="labelTitolo">Titolo</label>
                 <input type="text" id="searchTitle" data-i18n-placeholder="phTitolo" placeholder="Cerca nel titolo…">
@@ -401,6 +406,7 @@
             langBtn:         '🌐 English',
             themeLight:      '🔆 Light Mode',
             themeDark:       '🌙 Dark Mode',
+            labelGlobal:     'Ricerca Globale (usa "-" per escludere)',
             labelTitolo:     'Titolo',
             labelRelatore:   'Relatore',
             labelKeyword:    'Parola chiave',
@@ -408,6 +414,7 @@
             labelGruppo:     'Gruppo di ricerca',
             labelScadenza:   'Scadenza',
             labelSpeciale:   'Tipo speciale',
+            phGlobal:        'Cerca ovunque (es. robot -cloud)…',
             phTitolo:        'Cerca nel titolo…',
             phRelatore:      'Nome relatore…',
             phKeyword:       'Cerca nelle keyword…',
@@ -449,6 +456,7 @@
             langBtn:         '🌐 Italiano',
             themeLight:      '🔆 Light Mode',
             themeDark:       '🌙 Dark Mode',
+            labelGlobal:     'Global Search (use "-" to exclude)',
             labelTitolo:     'Title',
             labelRelatore:   'Supervisor',
             labelKeyword:    'Keyword',
@@ -456,6 +464,7 @@
             labelGruppo:     'Research group',
             labelScadenza:   'Deadline',
             labelSpeciale:   'Special filter',
+            phGlobal:        'Search anywhere (e.g. robot -cloud)…',
             phTitolo:        'Search in title…',
             phRelatore:      'Supervisor name…',
             phKeyword:       'Search keywords…',
@@ -540,6 +549,8 @@
     const favoritesGrid= document.getElementById('favoritesGrid');
     const favoritesSection = document.getElementById('favoritesSection');
     const statsCounter = document.getElementById('statsCounter');
+    
+    const fGlobal      = document.getElementById('searchGlobal');
     const fTitle       = document.getElementById('searchTitle');
     const fRelatore    = document.getElementById('searchRelatore');
     const fKeyword     = document.getElementById('searchKeyword');
@@ -790,6 +801,7 @@
 
     // ── Render ─────────────────────────────────────────────────
     function renderGrid() {
+        const globalQ   = fGlobal.value.toLowerCase();
         const titleQ    = fTitle.value.toLowerCase();
         const relatoreQ = fRelatore.value.toLowerCase();
         const kwQuery   = fKeyword.value.toLowerCase().trim();
@@ -802,7 +814,32 @@
         const onlyNew     = fNew     ? fNew.checked     : false;
         const onlyUpdated = fUpdated ? fUpdated.checked : false;
 
+        const includeTokens = [];
+        const excludeTokens = [];
+        const parseRe = /(-?)(?:"([^"]+)"|(\S+))/g;
+        let match;
+        while ((match = parseRe.exec(globalQ)) !== null) {
+            const isExclude = match[1] === '-';
+            const term = (match[2] || match[3] || '').trim();
+            if (term) {
+                if (isExclude) excludeTokens.push(term);
+                else includeTokens.push(term);
+            }
+        }
+
         const data = normalizedData.filter(t => {
+            if (includeTokens.length > 0 || excludeTokens.length > 0) {
+                const combinedText = `[${(t.keywords||[]).join(' ')}] ${t.titolo} ${t.descrizione}`.toLowerCase();
+                
+                for (const inc of includeTokens) {
+                    if (!combinedText.includes(inc)) return false;
+                }
+                
+                for (const exc of excludeTokens) {
+                    if (combinedText.includes(exc)) return false;
+                }
+            }
+
             if (titleQ && !t.titolo.toLowerCase().includes(titleQ)) return false;
             if (relatoreQ) {
                 const ok = (t.relatori || []).some(r => r.toLowerCase().includes(relatoreQ));
@@ -969,7 +1006,7 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
     // ── Init ───────────────────────────────────────────────────
-    [fTitle, fRelatore, fKeyword].forEach(el => el.addEventListener('input', renderGrid));
+    [fGlobal, fTitle, fRelatore, fKeyword].forEach(el => el.addEventListener('input', renderGrid));
     [fTipo, fGruppo, fScadenza, fAzienda, fEstero, fPreferiti, fNew, fUpdated]
         .filter(Boolean).forEach(el => el.addEventListener('change', renderGrid));
 
