@@ -10,6 +10,9 @@ cookie.txt
 # Local generated scraping cache
 dettagli_html/
 
+# IDE optimization folder
+.idea/
+
 # OS/editor noise
 .DS_Store
 Thumbs.db
