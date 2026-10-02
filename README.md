@@ -73,6 +73,27 @@ Then open `index.html` in your browser.
 ```bash
 python update_jobs.py
 ```
+When run, the script checks local cache `dettagli_jobs/corsi.json` (or fetches from the portal if missing) and presents an interactive prompt to filter or choose a course.
+
+**Ways to view and select degree courses:**
+1. **List all courses in terminal:**
+   ```bash
+   python update_jobs.py --list-corsi
+   ```
+   Displays all available courses (both Triennale and Magistrale) grouped with their respective IDs.
+2. **Interactive prompt:**
+   Run `python update_jobs.py` and:
+   - Type a keyword (e.g. `informatica` or `gestionale`) to filter.
+   - Type `tutti` to show the full numbered list and pick by number.
+   - Press `Enter` to proceed with the default (*Ingegneria Informatica Magistrale*).
+3. **Inspect the raw file:**
+   Open `dettagli_jobs/corsi.json` to view the full JSON list with `id_tit` and `nome_tit`.
+4. **Direct ID selection:**
+   Pass `--corso <ID>` to skip prompts completely (e.g., `68` for Computer Engineering):
+   ```bash
+   python update_jobs.py --corso 68
+   ```
+
 Then open `index_jobs.html` in your browser.
 
 ## UI Features

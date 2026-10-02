@@ -145,14 +145,121 @@ def fetch_detail(cod: str, cookie: str, force_update: bool = False) -> dict:
         
     return {}
 
+def get_corsi(cookie: str) -> list[dict]:
+    corsi_file = os.path.join(JSON_DIR, "corsi.json")
+    corsi = []
+
+    if os.path.exists(corsi_file):
+        try:
+            with open(corsi_file, "r", encoding="utf-8") as f:
+                corsi = json.load(f)
+        except Exception as e:
+            print(f"[WARN] Errore lettura {corsi_file}: {e}")
+
+    if not corsi:
+        print("[INFO] Recupero la lista dei corsi di laurea disponibili dal portale...")
+        headers = {
+            "Cookie": cookie,
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "X-Requested-With": "XMLHttpRequest",
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        for liv in [1, 2]:
+            url = f"https://didattica.polito.it/pls/portal30/stagejob.ng_job.list_titoli?term=&liv={liv}"
+            try:
+                resp = requests.get(url, headers=headers, timeout=10)
+                if resp.status_code == 200:
+                    liv_name = "Triennale" if liv == 1 else "Magistrale"
+                    for c in resp.json():
+                        c['liv_name'] = liv_name
+                        corsi.append(c)
+            except Exception as e:
+                print(f"  [WARN] Errore recupero corsi livello {liv}: {e}")
+        
+        if corsi:
+            os.makedirs(JSON_DIR, exist_ok=True)
+            with open(corsi_file, "w", encoding="utf-8") as f:
+                json.dump(corsi, f, ensure_ascii=False, indent=2)
+
+    return corsi
+
+def print_corsi_list(corsi: list[dict]):
+    print("\n" + "=" * 70)
+    print(" ELENCO CORSI DI LAUREA DISPONIBILI (Politecnico di Torino)")
+    print("=" * 70)
+    for liv_name in ["Magistrale", "Triennale"]:
+        subset = [c for c in corsi if c.get("liv_name") == liv_name]
+        if subset:
+            print(f"\n--- {liv_name.upper()} ({len(subset)} corsi) ---")
+            for c in subset:
+                print(f"  ID: {str(c['id_tit']):<6} | {c['nome_tit']}")
+    print("=" * 70 + "\n")
+
+def select_corso(cookie: str) -> str:
+    corsi = get_corsi(cookie)
+
+    if not corsi:
+        print("[WARN] Impossibile recuperare i corsi. Uso Ingegneria Informatica (68) di default.")
+        return "68"
+
+    print("\n" + "=" * 65)
+    print(" Selezione Corso di Laurea")
+    print("=" * 65)
+    print(" Opzioni:")
+    print("  • Digita una parola chiave per cercare (es. 'informatica', 'gestionale')")
+    print("  • Digita 'tutti' per mostrare l'elenco completo numerato")
+    print("  • Premi INVIO per selezionare il default (Ingegneria Informatica Magistrale)")
+    print("=" * 65)
+
+    query = input("\nCerca corso / 'tutti' / INVIO (default): ").strip().lower()
+
+    if not query:
+        return "68"
+
+    if query in ["tutti", "all", "*"]:
+        risultati = corsi
+    else:
+        risultati = [c for c in corsi if query in c.get('nome_tit', '').lower()]
+
+    if not risultati:
+        print("[WARN] Nessun corso trovato con quella ricerca. Uso Ingegneria Informatica (68) di default.")
+        return "68"
+
+    print(f"\nCorsi trovati ({len(risultati)}):")
+    for i, c in enumerate(risultati, 1):
+        print(f"  {i:>3}) [{c['liv_name']}] {c['nome_tit']} (ID: {c['id_tit']})")
+
+    while True:
+        scelta = input(f"\nScegli un numero (1-{len(risultati)}) oppure premi INVIO per default: ").strip()
+        if not scelta:
+            return "68"
+        if scelta.isdigit() and 1 <= int(scelta) <= len(risultati):
+            scelto = risultati[int(scelta)-1]
+            print(f"[INFO] Hai selezionato: {scelto['nome_tit']} [{scelto['liv_name']}] (ID: {scelto['id_tit']})")
+            return str(scelto['id_tit'])
+        print("[ERRORE] Scelta non valida.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Aggiorna offerte di lavoro e genera jobs_data.js")
     parser.add_argument("--force-update", action="store_true", help="Riscarica tutti i dettagli anche se in cache")
-    parser.add_argument("--corso", type=str, default="68", help="ID del corso di studi (default: 68 - Ingegneria Informatica)")
+    parser.add_argument("--corso", type=str, default="ask", help="ID del corso di studi (default: ask - seleziona interattivamente)")
+    parser.add_argument("--list-corsi", action="store_true", help="Mostra l'elenco completo di tutti i corsi di laurea disponibili ed esce")
     args = parser.parse_args()
 
     cookie = load_or_ask_cookie()
-    jobs_list = fetch_list(cookie, title_id=args.corso)
+
+    if args.list_corsi:
+        corsi = get_corsi(cookie)
+        print_corsi_list(corsi)
+        sys.exit(0)
+
+    titolo_id = args.corso
+    if titolo_id == "ask":
+        titolo_id = select_corso(cookie)
+
+    jobs_list = fetch_list(cookie, title_id=titolo_id)
 
     # Carica i PID precedenti se esistono
     prev_jobs = {}
