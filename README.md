@@ -1,20 +1,35 @@
-# Thesis Proposals Explorer
+# Thesis & Job Proposals Explorer (ThesisBoard)
 
-This project downloads thesis proposals from the Politecnico portal, extracts structured data, and renders a local interactive interface for browsing and filtering proposals.
+This project downloads thesis proposals and job offers from the Politecnico di Torino student portal, extracts structured data, and renders local interactive interfaces for browsing, filtering, and bookmarking proposals.
 
 ## What the project does
 
+### 1. Thesis Proposals (`index.html`)
 - Fetches the thesis list and detail pages from the portal (authenticated session required).
 - Extracts and normalizes key fields: title, supervisors, thesis type, expiration date, keywords, description, research groups, and external references.
 - Generates `data.js` consumed by the frontend.
 - Provides a local UI with full-text filters, advanced filters, expiry handling, modal details, and favorites.
 
+### 2. Job Offers (`index_jobs.html`)
+- Fetches the official job offers list and full detail specifications via the portal API.
+- Normalizes company info, job role/title, location/seats, contract type, compensation details, requirements, and deadlines.
+- Cleans HTML markup from descriptions and caches individual job details locally in `dettagli_jobs/`.
+- Generates `jobs_data.js` consumed by the dedicated frontend.
+- Provides a responsive glassmorphic UI matching the thesis hub with instant search, contract/location filtering, detail modal, and favorites.
+
 ## Main files
 
-- `update_tesi.py`: unified update pipeline (download list, download details, parse, generate `data.js`).
-- `index.html`: interactive frontend that reads `data.js`.
-- `data.js`: generated dataset used by the UI.
-- `.env_example`: template for sensitive configuration.
+- **Thesis:**
+  - `update_tesi.py`: unified thesis update pipeline (download list, download details, parse, generate `data.js`).
+  - `index.html`: interactive frontend that reads `data.js`.
+  - `data.js`: generated dataset for thesis proposals.
+- **Job Offers:**
+  - `update_jobs.py`: unified job offers update pipeline (download list, download details, generate `jobs_data.js`).
+  - `index_jobs.html`: interactive frontend that reads `jobs_data.js`.
+  - `jobs_data.js`: generated dataset for job offers.
+- **Shared / Configuration:**
+  - `.env`: local file holding session credentials (`POLITO_COOKIE`).
+  - `.env_example`: template for sensitive configuration.
 
 ## Requirements
 
@@ -31,7 +46,7 @@ pip install requests beautifulsoup4
 
 ## Configuration
 
-Sensitive data is loaded from `.env` using the key `POLITO_COOKIE`.
+Sensitive data is loaded from `.env` using the key `POLITO_COOKIE` (shared between thesis and job update scripts).
 
 1. Duplicate `.env_example` to `.env`.
 2. Set `POLITO_COOKIE` with your current authenticated portal cookie.
@@ -42,33 +57,44 @@ Example `.env`:
 POLITO_COOKIE=your_real_cookie_value
 ```
 
-If `.env` is missing, `update_tesi.py` asks for the cookie interactively and stores it in `.env`.
+If `.env` is missing, both `update_tesi.py` and `update_jobs.py` will prompt for the cookie interactively and save it automatically to `.env`.
 
 ## Usage
 
-Generate/update the dataset:
-
+### Updating Thesis Proposals
 ```bash
 python update_tesi.py
 ```
-
 Then open `index.html` in your browser.
 
-## UI features
+---
 
-- Text search by title
-- Text search by supervisor
-- Text search by keyword (partial match)
-- Filters by thesis type and research group
-- Expiry filter (all, active, expired)
-- Company and abroad filters
-- Expired badge and visual desaturation for expired cards
-- Detail modal with extended fields
-- Favorites (persistent in browser `localStorage`) and dedicated favorites section
+### Updating Job Offers
+```bash
+python update_jobs.py
+```
+Then open `index_jobs.html` in your browser.
+
+## UI Features
+
+### Thesis UI (`index.html`)
+- Text search by title, supervisor, and keywords
+- Filters by thesis type, research group, company, and abroad availability
+- Expiry filter (all, active, expired) with visual status badges
+- Detail modal with extended fields and links
+- Favorites system (persisted in browser `localStorage`)
+
+### Job Offers UI (`index_jobs.html`)
+- Text search by role/title, company, description, and workplace location
+- Filters by contract type (e.g. Tempo indeterminato, Stage, Apprendistato) and location
+- Expiry status filter (all, active, expired)
+- Interactive bidirectional sorting toolbar mirroring the student portal (Azienda, Oggetto, Sede, Data inserzione, Validità offerta)
+- Extended detail modal (job description, candidate requirements, compensation/benefits, locations, link to official portal page)
+- Favorites system with dedicated favorites view (persisted in browser `localStorage`)
 
 ## Notes
 
-- `data.js` is generated from `update_tesi.py`; rerun the script whenever you want fresh data.
-- Warning: run `update_tesi.py` frequently (ideally daily), because new thesis proposals can be published every day and existing ones can expire daily.
-- The detail HTML cache is stored locally in `dettagli_html/` and is ignored by Git.
-- Session cookies expire; update `.env` when needed.
+- Both `data.js` and `jobs_data.js` are generated locally and ignored by Git.
+- Details are cached locally (`dettagli_html/` for thesis, `dettagli_jobs/` for jobs) to avoid re-downloading unchanged items.
+- Politecnico portal session cookies expire periodically; update `POLITO_COOKIE` in `.env` when requests return authentication errors.
+

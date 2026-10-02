@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offerte di Lavoro - Dashboard Interattiva</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color:     #0f172a;
+            --surface:      #1e293b;
+            --surface-hover:#334155;
+            --primary:      #3b82f6;
+            --primary-hover:#2563eb;
+            --text-main:    #f8fafc;
+            --text-muted:   #94a3b8;
+            --border-color: #334155;
+            --radius:       12px;
+            --glass-bg:     rgba(30, 41, 59, 0.85);
+            --glass-border: rgba(255,255,255,0.1);
+        }
+        [data-theme="light"] {
+            --bg-color:     #f8fafc;
+            --surface:      #ffffff;
+            --surface-hover:#f1f5f9;
+            --primary:      #2563eb;
+            --primary-hover:#1d4ed8;
+            --text-main:    #0f172a;
+            --text-muted:   #64748b;
+            --border-color: #e2e8f0;
+            --glass-bg:     rgba(255,255,255,0.9);
+            --glass-border: rgba(0,0,0,0.1);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
+        body { background:var(--bg-color); color:var(--text-main); line-height:1.6; min-height:100vh; overflow-x:hidden; transition:background-color 0.3s ease; }
+
+        .bg-pattern {
+            position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:-1;
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(59,130,246,0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16,185,129,0.15), transparent 25%);
+            filter:blur(40px);
+        }
+
+        header {
+            padding:1.2rem 5%; border-bottom:1px solid var(--border-color);
+            background:var(--glass-bg); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+            position:sticky; top:0; z-index:200;
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        h1 {
+            font-size:1.6rem; font-weight:700;
+            background:linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+            display:flex; align-items:center; gap:0.5rem;
+        }
+        .theme-toggle {
+            background:var(--surface); border:1px solid var(--border-color); color:var(--text-main);
+            padding:0.45rem 1rem; border-radius:20px; cursor:pointer; font-weight:500; transition:all 0.2s;
+        }
+        .theme-toggle:hover { background:var(--surface-hover); transform:translateY(-1px); }
+        .header-actions { display:flex; align-items:center; gap:0.55rem; }
+        .portal-link {
+            display:inline-flex; align-items:center;
+            background:var(--primary); color:#fff;
+            border:1px solid var(--primary);
+            padding:0.45rem 0.95rem;
+            border-radius:20px;
+            font-size:0.86rem;
+            font-weight:600;
+            text-decoration:none;
+            transition:all 0.2s;
+        }
+        .portal-link:hover { background:var(--primary-hover); border-color:var(--primary-hover); transform:translateY(-1px); }
+
+        .container { max-width:1400px; margin:2rem auto; padding:0 5%; }
+
+        /* ── Filters ─────────────────────────────────────────── */
+        .filters {
+            background:var(--surface); border:1px solid var(--glass-border); border-radius:var(--radius);
+            padding:1.25rem; margin-bottom:1.5rem;
+            display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:0.9rem;
+            box-shadow:0 8px 24px rgba(0,0,0,0.15);
+        }
+        .filter-group { display:flex; flex-direction:column; gap:0.35rem; }
+        .filter-group label { font-size:0.78rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
+        input, select {
+            width:100%; padding:0.6rem 0.85rem; border-radius:8px; border:1px solid var(--border-color);
+            background:var(--bg-color); color:var(--text-main); outline:none; transition:all 0.2s; font-size:0.9rem;
+        }
+        input:focus, select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
+
+        .checkbox-row { display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap; padding:0.4rem 0; }
+        .checkbox-group { display:flex; align-items:center; gap:0.45rem; cursor:pointer; font-size:0.9rem; }
+        .checkbox-group input { width:auto; cursor:pointer; accent-color:var(--primary); transform:scale(1.2); }
+
+        /* ── Sort Toolbar ────────────────────────────────────── */
+        .sort-toolbar {
+            background:var(--surface); border:1px solid var(--glass-border); border-radius:var(--radius);
+            padding:0.75rem 1.1rem; margin-bottom:1.25rem;
+            display:flex; align-items:center; justify-content:space-between; gap:0.8rem; flex-wrap:wrap;
+            box-shadow:0 4px 14px rgba(0,0,0,0.08);
+        }
+        .sort-toolbar-label {
+            font-size:0.82rem; font-weight:700; color:var(--text-muted);
+            text-transform:uppercase; letter-spacing:0.5px;
+            display:flex; align-items:center; gap:0.5rem;
+        }
+        .sort-toolbar-label i { color:var(--primary); }
+        .sort-group { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+        .sort-btn {
+            background:var(--bg-color); border:1px solid var(--border-color); color:var(--text-main);
+            padding:0.42rem 0.85rem; border-radius:20px; font-size:0.84rem; font-weight:500;
+            cursor:pointer; display:inline-flex; align-items:center; gap:0.45rem;
+            transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select:none;
+        }
+        .sort-btn:hover {
+            background:var(--surface-hover); border-color:var(--primary); color:var(--primary); transform:translateY(-1px);
+        }
+        .sort-btn.active {
+            background:rgba(59, 130, 246, 0.18); border-color:var(--primary); color:var(--primary);
+            font-weight:600; box-shadow:0 0 0 1px var(--primary);
+        }
+        .sort-btn .sort-icon { font-size:0.8rem; opacity:0.6; transition:all 0.2s; }
+        .sort-btn.active .sort-icon { opacity:1; color:var(--primary); }
+        .sort-reset-btn {
+            background:transparent; border:1px dashed var(--border-color); color:var(--text-muted);
+            padding:0.42rem 0.75rem; border-radius:20px; font-size:0.8rem; cursor:pointer;
+            display:none; align-items:center; gap:0.35rem; transition:all 0.2s;
+        }
+        .sort-reset-btn.visible { display:inline-flex; }
+        .sort-reset-btn:hover { background:var(--surface-hover); color:var(--text-main); border-color:var(--text-muted); }
+
+        /* ── Stats ───────────────────────────────────────────── */
+        .stats { margin-bottom:1rem; font-size:0.9rem; color:var(--text-muted); }
+
+        .section-title {
+            margin:1.2rem 0 0.8rem;
+            font-size:0.95rem;
+            text-transform:uppercase;
+            letter-spacing:0.7px;
+            color:var(--text-muted);
+            font-weight:700;
+        }
+
+        .favorites-section { margin-bottom:1.4rem; }
+        .favorites-section.hidden { display:none; }
+
+        /* ── Grid ────────────────────────────────────────────── */
+        .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:1.4rem; }
+
+        /* ── Card ────────────────────────────────────────────── */
+        .card {
+            background:var(--surface); border:1px solid var(--glass-border); border-radius:var(--radius);
+            padding:1.4rem; transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+            display:flex; flex-direction:column; gap:0.9rem;
+            position:relative; overflow:hidden; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);
+            cursor:pointer;
+            animation:fadeIn 0.4s ease-out forwards;
+        }
+        .card:hover { transform:translateY(-4px); box-shadow:0 20px 25px -5px rgba(0,0,0,0.25); border-color:var(--primary); }
+        .card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--primary); opacity:0; transition:opacity 0.3s; }
+        .card:hover::before { opacity:1; }
+        .card.expired { opacity:0.6; filter:saturate(0.5); }
+        .card.expired:hover { opacity:0.9; filter:saturate(0.8); }
+
+        .card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:0.8rem; }
+        .card-title { font-size:1.1rem; font-weight:700; color:var(--text-main); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+        .card-company { font-size:0.85rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem;}
+
+        /* ── Badges ──────────────────────────────────────────── */
+        .badges-top { display:flex; gap:0.4rem; flex-shrink:0; flex-wrap:wrap; }
+        .badge { padding:0.2rem 0.55rem; border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; white-space:nowrap; }
+        .badge-new     { background:rgba(34,197,94,0.2);    color:#4ade80; border:1px solid rgba(34,197,94,0.4); }
+        .badge-updated { background:rgba(168,85,247,0.2);   color:#c084fc; border:1px solid rgba(168,85,247,0.4); }
+        .badge-scaduta { background:rgba(239,68,68,0.15);   color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+        [data-theme="light"] .badge-new     { color:#16a34a; }
+        [data-theme="light"] .badge-updated { color:#7c3aed; }
+        [data-theme="light"] .badge-scaduta { color:#dc2626; }
+
+        .fav-btn {
+            width:1.9rem; height:1.9rem;
+            border-radius:50%; border:1px solid var(--border-color);
+            background:var(--surface-hover); color:var(--text-muted);
+            cursor:pointer; font-size:1rem; line-height:1;
+            display:flex; align-items:center; justify-content:center;
+            transition:all 0.2s ease;
+            flex-shrink:0;
+        }
+        .fav-btn:hover { border-color:var(--primary); color:var(--primary); transform:translateY(-1px); }
+        .fav-btn.active {
+            background:rgba(245,158,11,0.15);
+            border-color:rgba(245,158,11,0.5);
+            color:#f59e0b;
+        }
+
+        /* ── Meta Info ─────────────────────────────────────────── */
+        .meta-info { background:var(--bg-color); border-radius:8px; padding:0.9rem; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:0.5rem; }
+        .meta-item { display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-muted); }
+        .meta-item i { color:var(--primary); width:14px; text-align:center;}
+        .meta-value { font-weight:500; color:var(--text-main); }
+
+        /* ── No results ───────────────────────────────────────── */
+        .no-results {
+            text-align:center; padding:4rem; color:var(--text-muted); grid-column:1/-1;
+            font-size:1.05rem; background:var(--surface); border-radius:var(--radius);
+            border:1px dashed var(--border-color);
+        }
+
+        /* ── Modal ────────────────────────────────────────────── */
+        .modal-overlay {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+            z-index:500; display:none; justify-content:center; align-items:center; padding:1rem;
+            opacity:0; transition:opacity 0.25s ease;
+        }
+        .modal-overlay.active { display:flex; }
+        .modal-overlay.visible { opacity:1; }
+
+        .modal {
+            background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius);
+            width:100%; max-width:900px; max-height:90vh; overflow-y:auto;
+            position:relative; box-shadow:0 30px 60px rgba(0,0,0,0.5);
+            transform:scale(0.95) translateY(16px);
+            transition:transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-overlay.visible .modal { transform:scale(1) translateY(0); }
+
+        .modal-header {
+            padding:1.5rem 1.5rem 1rem;
+            border-bottom:1px solid var(--border-color);
+            position:sticky; top:0;
+            background:var(--glass-bg); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+            z-index:10;
+        }
+        .modal-close {
+            position:absolute; top:1.1rem; right:1.1rem;
+            background:var(--surface-hover); border:1px solid var(--border-color); color:var(--text-main);
+            width:2rem; height:2rem; border-radius:50%; font-size:1.1rem; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            transition:all 0.2s; z-index:20;
+        }
+        .modal-close:hover { background:var(--primary); border-color:var(--primary); color:#fff; transform:rotate(90deg); }
+        
+        .modal-company { font-size:1rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.2rem;}
+        .modal-title { font-size:1.4rem; font-weight:700; color:var(--text-main); padding-right:2.5rem; line-height:1.4; margin-bottom:0.5rem; }
+
+        .modal-link {
+            display:inline-block; margin-top:0.8rem; padding:0.45rem 1rem;
+            background:var(--primary); color:#fff; border-radius:6px;
+            text-decoration:none; font-size:0.82rem; font-weight:600;
+            transition:background 0.2s;
+        }
+        .modal-link:hover { background:var(--primary-hover); }
+
+        .modal-body { padding:1.5rem; display:flex; flex-direction:column; gap:1.25rem; }
+
+        .detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; }
+        .detail-section { background:var(--bg-color); border-radius:8px; border:1px solid var(--border-color); padding:1.1rem; }
+        .detail-title { font-size:0.78rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:0.6rem; letter-spacing:0.5px; }
+        .detail-content { font-size:0.92rem; color:var(--text-main); white-space:pre-line; line-height:1.7; }
+        .detail-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; }
+        .detail-value { font-size:0.92rem; font-weight:500; margin-top:0.2rem; }
+
+        /* ── Info CV Section ─────────────────────────────────── */
+        .info-cv-section { border-left:4px solid var(--primary); }
+        .info-cv-header { margin-bottom:0.85rem; }
+        .info-cv-title {
+            font-size:0.85rem; color:var(--text-main); text-transform:uppercase;
+            font-weight:700; letter-spacing:0.5px; display:flex; align-items:center; gap:0.5rem;
+            margin-bottom:0.25rem;
+        }
+        .info-cv-title i { color:var(--primary); font-size:0.95rem; }
+        .info-cv-subtitle { font-size:0.82rem; color:var(--text-muted); line-height:1.4; }
+        .info-cv-content {
+            display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+            gap:1.25rem; background:var(--surface); border:1px solid var(--border-color);
+            border-radius:8px; padding:1.1rem;
+        }
+        .info-cv-left { font-size:0.92rem; color:var(--text-main); white-space:pre-line; line-height:1.6; }
+        .info-cv-right { display:flex; flex-direction:column; gap:0.75rem; justify-content:center; }
+        .info-cv-row { display:flex; align-items:flex-start; gap:0.85rem; font-size:0.9rem; }
+        .info-cv-label {
+            font-weight:700; color:var(--text-muted); min-width:60px;
+            text-transform:uppercase; font-size:0.75rem; letter-spacing:0.5px; padding-top:0.15rem;
+        }
+        .info-cv-val { flex:1; word-break:break-all; }
+        .info-cv-link {
+            color:var(--primary); text-decoration:none; display:inline-flex;
+            align-items:center; gap:0.45rem; font-weight:500; transition:all 0.2s;
+        }
+        .info-cv-link:hover { color:var(--primary-hover); text-decoration:underline; }
+
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+
+    <header>
+        <h1><i class="fa-solid fa-briefcase"></i> Job Hub</h1>
+        <div class="header-actions">
+            <a
+                class="portal-link"
+                href="https://didattica.polito.it/pls/portal30/sviluppo.pagine_studenti.offerte_lavoro"
+                target="_blank"
+                rel="noopener"
+                id="portalLink"
+                data-i18n="portalLink"
+            >Apri lista ufficiale offerte</a>
+            <button class="theme-toggle" onclick="toggleLang()" id="langBtn">🌐 English</button>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🔆 Light Mode</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="filters">
+            <div class="filter-group" style="grid-column:1/-1;">
+                <label for="searchGlobal" data-i18n="labelGlobal">Ricerca Globale (usa '-' per escludere)</label>
+                <input type="text" id="searchGlobal" data-i18n-placeholder="phGlobal" placeholder="es. developer -milano">
+            </div>
+
+            <div class="filter-group">
+                <label for="searchTitle" data-i18n="labelTitolo">Posizione</label>
+                <input type="text" id="searchTitle" data-i18n-placeholder="phTitolo" placeholder="Cerca nella posizione…">
+            </div>
+
+            <div class="filter-group">
+                <label for="searchCompany" data-i18n="labelCompany">Azienda</label>
+                <input type="text" id="searchCompany" data-i18n-placeholder="phCompany" placeholder="Nome azienda…">
+            </div>
+
+            <div class="filter-group">
+                <label for="searchLocation" data-i18n="labelLocation">Sede</label>
+                <input type="text" id="searchLocation" data-i18n-placeholder="phLocation" placeholder="Cerca nella sede…">
+            </div>
+
+            <div class="filter-group">
+                <label for="filterScadenza" data-i18n="labelScadenza">Scadenza</label>
+                <select id="filterScadenza">
+                    <option value="active" data-i18n="optScadActive">Solo attive</option>
+                    <option value="all"    data-i18n="optScadAll">Tutte</option>
+                    <option value="expired" data-i18n="optScadExp">Solo scadute</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="grid-column:1/-1;">
+                <label style="margin-bottom:0.3rem;" data-i18n="labelSpeciale">Filtri speciali</label>
+                <div class="checkbox-row">
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="filterPreferiti"> <span data-i18n="chkPreferiti">Solo preferite</span>
+                    </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="filterNew"> <span class="badge badge-new" style="font-size:0.65rem;">NEW</span>&nbsp;<span data-i18n="chkNew">Solo nuove</span>
+                    </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="filterUpdated"> <span class="badge badge-updated" style="font-size:0.65rem;">UPDATED</span>&nbsp;<span data-i18n="chkUpdated">Solo aggiornate</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="sort-toolbar">
+            <div class="sort-toolbar-label">
+                <i class="fa-solid fa-arrow-down-short-wide"></i>
+                <span data-i18n="sortLabel">Ordina per:</span>
+            </div>
+            <div class="sort-group">
+                <button type="button" class="sort-btn" data-sort="azienda">
+                    <span data-i18n="sortAzienda">Azienda</span>
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                </button>
+                <button type="button" class="sort-btn" data-sort="oggetto">
+                    <span data-i18n="sortOggetto">Oggetto</span>
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                </button>
+                <button type="button" class="sort-btn" data-sort="sede">
+                    <span data-i18n="sortSede">Sede</span>
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                </button>
+                <button type="button" class="sort-btn" data-sort="data_inserz">
+                    <span data-i18n="sortDataIns">Data inserzione</span>
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                </button>
+                <button type="button" class="sort-btn" data-sort="validita">
+                    <span data-i18n="sortValidita">Validità offerta</span>
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                </button>
+                <button type="button" class="sort-reset-btn" id="sortResetBtn" title="Ripristina ordine">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> <span data-i18n="sortReset">Reset</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="stats" id="statsCounter">Caricamento offerte…</div>
+
+        <section class="favorites-section hidden" id="favoritesSection">
+            <h2 class="section-title" data-i18n="sectionFavs">Preferite</h2>
+            <div class="grid" id="favoritesGrid"></div>
+        </section>
+
+        <h2 class="section-title" data-i18n="sectionAll">Tutte le offerte</h2>
+        <div class="grid" id="jobsGrid"></div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalBox">
+            <button class="modal-close" id="modalCloseBtn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-header">
+                <div class="modal-company" id="modalCompany"></div>
+                <h2 class="modal-title" id="modalTitle"></h2>
+                <div class="badges-top" id="modalBadges"></div>
+                <a href="#" id="modalLink" class="modal-link" target="_blank" rel="noopener" data-i18n="modalPortalLink">Apri sul Portale della Didattica ↗</a>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="jobs_data.js"></script>
+    <script>
+    // ── Theme ──────────────────────────────────────────────────
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.getElementById('themeBtn').textContent = isDark ? tr('themeDark') : tr('themeLight');
+    }
+
+    // ── i18n ────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+        it: {
+            portalLink:      'Apri lista ufficiale offerte',
+            langBtn:         '🌐 English',
+            themeLight:      '🔆 Light Mode',
+            themeDark:       '🌙 Dark Mode',
+            labelGlobal:     'Ricerca Globale (usa "-" per escludere)',
+            labelTitolo:     'Posizione',
+            labelCompany:    'Azienda',
+            labelLocation:   'Sede',
+            labelScadenza:   'Scadenza',
+            labelSpeciale:   'Filtri speciali',
+            phGlobal:        'Cerca ovunque (es. developer -milano)…',
+            phTitolo:        'Cerca nella posizione…',
+            phCompany:       'Nome azienda…',
+            phLocation:      'Cerca nella sede…',
+            optScadActive:   'Solo attive',
+            optScadAll:      'Tutte',
+            optScadExp:      'Solo scadute',
+            chkPreferiti:    'Solo preferite',
+            chkNew:          'Solo nuove',
+            chkUpdated:      'Solo aggiornate',
+            sectionFavs:     'Preferite',
+            sectionAll:      'Tutte le offerte',
+            modalPortalLink: 'Apri sul Portale della Didattica ↗',
+            statsLoading:    'Caricamento offerte…',
+            statsResults:    (n, tot, favs) => `Risultati: ${n} su ${tot} offerte. Preferite: ${favs}.`,
+            statsFavs:       (n, tot, all) => `Risultati: ${n} preferite su ${tot} offerte filtrate (${all} totali).`,
+            noResults:       'Nessuna offerta trovata con i filtri correnti.',
+            noFavs:          'Nessuna offerta preferita trovata con i filtri correnti.',
+            noData:          'Errore: dati non trovati. Esegui update_jobs.py per generare jobs_data.js.',
+            favAdd:          'Aggiungi ai preferiti',
+            favRemove:       'Rimuovi dai preferiti',
+            detLocation:     'Sede di lavoro',
+            detDataIns:      'Data Inserzione',
+            detScadenza:     'Scadenza',
+            detMission:      'Mission / Intro',
+            detAttivita:     'Attività previste',
+            detRequisiti:    'Requisiti Candidato',
+            detTipologia:    'Tipologia Contrattuale',
+            detRetribuzione: 'Retribuzione Prevista',
+            sortLabel:       'Ordina per:',
+            sortAzienda:     'Azienda',
+            sortOggetto:     'Oggetto',
+            sortSede:        'Sede',
+            sortDataIns:     'Data inserzione',
+            sortValidita:    'Validità offerta',
+            sortReset:       'Reset ordine',
+            sortAsc:         'crescente',
+            sortDesc:        'decrescente',
+            cardInserz:      'Pubblicata:',
+            cardScadenza:    'Scadenza:',
+            detInfoCv:       'Per informazioni e invio CV',
+            detInfoCvSub:    "Le candidature vengono effettuate esclusivamente tramite il sito o e-mail dell'azienda/ente",
+            detEmail:        'E-mail',
+            detWeb:          'Web'
+        },
+        en: {
+            portalLink:      'Open official job list',
+            langBtn:         '🌐 Italiano',
+            themeLight:      '🔆 Light Mode',
+            themeDark:       '🌙 Dark Mode',
+            labelGlobal:     'Global Search (use "-" to exclude)',
+            labelTitolo:     'Position',
+            labelCompany:    'Company',
+            labelLocation:   'Location',
+            labelScadenza:   'Deadline',
+            labelSpeciale:   'Special filters',
+            phGlobal:        'Search anywhere (e.g. developer -milan)…',
+            phTitolo:        'Search position…',
+            phCompany:       'Company name…',
+            phLocation:      'Search location…',
+            optScadActive:   'Active only',
+            optScadAll:      'All',
+            optScadExp:      'Expired only',
+            chkPreferiti:    'Favourites only',
+            chkNew:          'New only',
+            chkUpdated:      'Updated only',
+            sectionFavs:     'Favourites',
+            sectionAll:      'All offers',
+            modalPortalLink: 'Open on the Teaching Portal ↗',
+            statsLoading:    'Loading offers…',
+            statsResults:    (n, tot, favs) => `Results: ${n} of ${tot} offers. Favourites: ${favs}.`,
+            statsFavs:       (n, tot, all) => `Results: ${n} favourites of ${tot} filtered offers (${all} total).`,
+            noResults:       'No offers found with the current filters.',
+            noFavs:          'No favourite offers found with the current filters.',
+            noData:          'Error: data not found. Run update_jobs.py to generate jobs_data.js.',
+            favAdd:          'Add to favourites',
+            favRemove:       'Remove from favourites',
+            detLocation:     'Location',
+            detDataIns:      'Posted Date',
+            detScadenza:     'Deadline',
+            detMission:      'Mission / Intro',
+            detAttivita:     'Activities',
+            detRequisiti:    'Requirements',
+            detTipologia:    'Contract Type',
+            detRetribuzione: 'Expected Salary',
+            sortLabel:       'Sort by:',
+            sortAzienda:     'Company',
+            sortOggetto:     'Position',
+            sortSede:        'Location',
+            sortDataIns:     'Posting date',
+            sortValidita:    'Offer deadline',
+            sortReset:       'Reset order',
+            sortAsc:         'ascending',
+            sortDesc:        'descending',
+            cardInserz:      'Posted:',
+            cardScadenza:    'Deadline:',
+            detInfoCv:       'Information and Application',
+            detInfoCvSub:    'Applications must be submitted exclusively via the company website or e-mail',
+            detEmail:        'E-mail',
+            detWeb:          'Web'
+        },
+    };
+
+    let currentLang = localStorage.getItem('jobsLang') || 'it';
+
+    function tr(key) {
+        return (TRANSLATIONS[currentLang] || TRANSLATIONS.it)[key] || key;
+    }
+
+    function applyLang() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const val = tr(key);
+            if (typeof val === 'string') el.textContent = val;
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            el.placeholder = tr(el.getAttribute('data-i18n-placeholder'));
+        });
+        const langBtn = document.getElementById('langBtn');
+        if (langBtn) langBtn.textContent = tr('langBtn');
+        const themeBtn = document.getElementById('themeBtn');
+        if (themeBtn) {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeBtn.textContent = isDark ? tr('themeDark') : tr('themeLight');
+        }
+        if (statsCounter) statsCounter.textContent = tr('statsLoading');
+        document.documentElement.lang = currentLang;
+    }
+
+    function toggleLang() {
+        currentLang = currentLang === 'it' ? 'en' : 'it';
+        localStorage.setItem('jobsLang', currentLang);
+        applyLang();
+        renderGrid();
+    }
+
+
+    // ── Elements ───────────────────────────────────────────────
+    const grid         = document.getElementById('jobsGrid');
+    const favoritesGrid= document.getElementById('favoritesGrid');
+    const favoritesSection = document.getElementById('favoritesSection');
+    const statsCounter = document.getElementById('statsCounter');
+    
+    const fGlobal      = document.getElementById('searchGlobal');
+    const fTitle       = document.getElementById('searchTitle');
+    const fCompany     = document.getElementById('searchCompany');
+    const fLocation    = document.getElementById('searchLocation');
+    const fScadenza    = document.getElementById('filterScadenza');
+    const fPreferiti   = document.getElementById('filterPreferiti');
+    const fNew         = document.getElementById('filterNew');
+    const fUpdated     = document.getElementById('filterUpdated');
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalBox     = document.getElementById('modalBox');
+    const modalCloseBtn= document.getElementById('modalCloseBtn');
+    const modalTitle   = document.getElementById('modalTitle');
+    const modalCompany = document.getElementById('modalCompany');
+    const modalBadges  = document.getElementById('modalBadges');
+    const modalBody    = document.getElementById('modalBody');
+    const modalLink    = document.getElementById('modalLink');
+    
+    const FAV_STORAGE_KEY = 'jobsFavoritesV1';
+
+    let normalizedData = [];
+    let favorites = new Set();
+    let currentSort = {
+        field: null,      // 'azienda' | 'oggetto' | 'sede' | 'data_inserz' | 'validita'
+        direction: null   // 'asc' | 'desc'
+    };
+
+    function handleSortClick(field) {
+        if (currentSort.field === field) {
+            if (currentSort.direction === 'asc') {
+                currentSort.direction = 'desc';
+            } else {
+                currentSort.field = null;
+                currentSort.direction = null;
+            }
+        } else {
+            currentSort.field = field;
+            currentSort.direction = 'asc';
+        }
+        updateSortUI();
+        renderGrid();
+    }
+
+    function resetSort() {
+        currentSort.field = null;
+        currentSort.direction = null;
+        updateSortUI();
+        renderGrid();
+    }
+
+    function updateSortUI() {
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            const field = btn.getAttribute('data-sort');
+            const icon = btn.querySelector('.sort-icon');
+            if (currentSort.field === field) {
+                btn.classList.add('active');
+                if (currentSort.direction === 'asc') {
+                    icon.className = 'fa-solid fa-sort-up sort-icon';
+                    btn.setAttribute('title', `${tr('sortAsc')} (click per ${tr('sortDesc')})`);
+                } else {
+                    icon.className = 'fa-solid fa-sort-down sort-icon';
+                    btn.setAttribute('title', `${tr('sortDesc')} (click per reimpostare)`);
+                }
+            } else {
+                btn.classList.remove('active');
+                icon.className = 'fa-solid fa-sort sort-icon';
+                btn.setAttribute('title', `Ordina per ${btn.querySelector('span').textContent}`);
+            }
+        });
+
+        const resetBtn = document.getElementById('sortResetBtn');
+        if (resetBtn) {
+            resetBtn.classList.toggle('visible', currentSort.field !== null);
+        }
+    }
+
+    function getFavId(t) {
+        return String(t.cod_job || '');
+    }
+
+    function loadFavorites() {
+        try {
+            const raw = localStorage.getItem(FAV_STORAGE_KEY);
+            if (!raw) return;
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) {
+                favorites = new Set(arr.map(v => String(v)));
+            }
+        } catch (_) {
+            favorites = new Set();
+        }
+    }
+
+    function saveFavorites() {
+        localStorage.setItem(FAV_STORAGE_KEY, JSON.stringify([...favorites]));
+    }
+
+    function isFavorite(t) {
+        return favorites.has(getFavId(t));
+    }
+
+    function toggleFavorite(t) {
+        const id = getFavId(t);
+        if (!id) return;
+        if (favorites.has(id)) {
+            favorites.delete(id);
+        } else {
+            favorites.add(id);
+        }
+        saveFavorites();
+    }
+
+    function parseDateLoose(value) {
+        if (!value) return null;
+        const raw = String(value).trim();
+        const matchIt = raw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (matchIt) {
+            const d = new Date(`${matchIt[3]}-${matchIt[2]}-${matchIt[1]}T00:00:00`);
+            if (!Number.isNaN(d.getTime())) return d;
+        }
+        const matchIso = raw.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (matchIso) {
+            const d = new Date(`${matchIso[1]}-${matchIso[2]}-${matchIso[3]}T00:00:00`);
+            if (!Number.isNaN(d.getTime())) return d;
+        }
+        return null;
+    }
+
+    function formatSede(sedeVal) {
+        if (!sedeVal) return 'Non specificata';
+        if (!Array.isArray(sedeVal)) return String(sedeVal);
+        let parts = [];
+        sedeVal.forEach(s => {
+            if (s.comune && Array.isArray(s.comune) && s.comune.length > 0) {
+                s.comune.forEach(c => parts.push(c.label || c.comune));
+            } else if (s.nome_stato_it) {
+                parts.push(s.nome_stato_it);
+            }
+        });
+        return parts.filter(Boolean).join(', ') || 'Non specificata';
+    }
+
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatWebUrl(url) {
+        if (!url) return '#';
+        const trimmed = String(url).trim();
+        if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed;
+        }
+        return 'https://' + trimmed;
+    }
+
+    function formatMailUrl(email, subject) {
+        if (!email) return '#';
+        let href = 'mailto:' + encodeURIComponent(email.trim());
+        if (subject) {
+            href += '?subject=' + encodeURIComponent('Candidatura: ' + String(subject).trim());
+        }
+        return href;
+    }
+
+    function linkifyText(text) {
+        if (!text) return '';
+        const escaped = esc(text);
+        const withEmails = escaped.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a class="info-cv-link" href="mailto:$1"><i class="fa-regular fa-envelope"></i> $1</a>');
+        const withUrls = withEmails.replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g, match => {
+            const href = match.startsWith('http') ? match : 'https://' + match;
+            return `<a class="info-cv-link" href="${href}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${match}</a>`;
+        });
+        return withUrls;
+    }
+
+    function cleanHTML(str) {
+        if (!str) return '';
+        let s = str.replace(/<br\s*[\/]?>/gi, '\n');
+        s = s.replace(/<\/p>/gi, '\n');
+        s = s.replace(/<\/li>/gi, '\n');
+        s = s.replace(/<li>/gi, '• ');
+        s = s.replace(/&nbsp;/gi, ' ');
+        s = s.replace(/<[^>]*>?/gm, '');
+        const txt = document.createElement("textarea");
+        txt.innerHTML = s;
+        return txt.value.trim();
+    }
+
+    function normalizeRecord(t) {
+        const rec = t || {};
+        const scadenza = String(rec.d_validita || rec.d_valid || '').trim();
+        const parsedDate = parseDateLoose(scadenza);
+        const inserzione = String(rec.d_inserz || '').trim();
+        const parsedInserz = parseDateLoose(inserzione);
+        
+        return {
+            ...rec,
+            sede_formatted: formatSede(rec.sede),
+            mission_clean: cleanHTML(rec.mission),
+            attivita_clean: cleanHTML(rec.attivita),
+            requisiti_clean: cleanHTML(rec.requisiti),
+            retribuzione_clean: cleanHTML(rec.retribuzione),
+            riferimenti_clean: cleanHTML(rec.riferimenti),
+            web_clean: String(rec.web || '').trim(),
+            email_1_clean: String(rec.email_1 || '').trim(),
+            email_2_clean: String(rec.email_2 || '').trim(),
+            scaduta: parsedDate ? parsedDate < new Date(new Date().toDateString()) : false,
+            time_inserz: parsedInserz ? parsedInserz.getTime() : 0,
+            time_validita: parsedDate ? parsedDate.getTime() : 0,
+            azienda_name: rec.azienda?.rag_sociale || 'Unknown Company',
+            link_polito: `https://didattica.polito.it/pls/portal30/stagejob.ng_job.vis_oggetto?cod=${rec.cod_job}`
+        };
+    }
+
+    // ── Card factory ───────────────────────────────────────────
+    function buildCard(t) {
+        const card = document.createElement('div');
+        card.className = 'card' + (t.scaduta ? ' expired' : '');
+        const favorite = isFavorite(t);
+
+        const badges = [];
+        if (t.is_new)    badges.push('<span class="badge badge-new">NEW</span>');
+        if (t.is_updated)badges.push('<span class="badge badge-updated">UPDATED</span>');
+        if (t.scaduta)   badges.push('<span class="badge badge-scaduta">Scaduta</span>');
+
+        card.innerHTML = `
+            <div class="card-header">
+                <div>
+                    <div class="card-company"><i class="fa-regular fa-building"></i> ${esc(t.azienda_name)}</div>
+                    <h3 class="card-title">${esc(t.oggetto || 'Senza Titolo')}</h3>
+                </div>
+                <div class="badges-top">
+                    <button class="fav-btn ${favorite ? 'active' : ''}" title="${favorite ? tr('favRemove') : tr('favAdd')}" aria-label="Preferiti">${favorite ? '★' : '☆'}</button>
+                    ${badges.join('')}
+                </div>
+            </div>
+            
+            <div class="meta-info">
+                <div class="meta-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span class="meta-value">${esc(t.sede_formatted)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; gap:0.6rem; flex-wrap:wrap;">
+                    <div class="meta-item">
+                        <i class="fa-regular fa-calendar-plus"></i>
+                        <span>${tr('cardInserz')} <span class="meta-value">${esc(t.d_inserz || '—')}</span></span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fa-regular fa-clock"></i>
+                        <span>${tr('cardScadenza')} <span class="meta-value" style="${t.scaduta ? 'color:#f87171' : ''}">${esc(t.d_validita || '—')}</span></span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const favBtn = card.querySelector('.fav-btn');
+        if (favBtn) {
+            favBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleFavorite(t);
+                renderGrid();
+            });
+        }
+
+        card.addEventListener('click', () => openModal(t));
+        return card;
+    }
+
+    // ── Render ─────────────────────────────────────────────────
+    function renderGrid() {
+        const globalQ   = fGlobal.value.toLowerCase();
+        const titleQ    = fTitle.value.toLowerCase();
+        const compQ     = fCompany.value.toLowerCase();
+        const locQ      = fLocation.value.toLowerCase();
+        const expFilter = fScadenza.value;  // 'all' | 'active' | 'expired'
+        const onlyFavs  = fPreferiti.checked;
+        const onlyNew     = fNew     ? fNew.checked     : false;
+        const onlyUpdated = fUpdated ? fUpdated.checked : false;
+
+        const includeTokens = [];
+        const excludeTokens = [];
+        const parseRe = /(-?)(?:"([^"]+)"|(\S+))/g;
+        let match;
+        while ((match = parseRe.exec(globalQ)) !== null) {
+            const isExclude = match[1] === '-';
+            const term = (match[2] || match[3] || '').trim();
+            if (term) {
+                if (isExclude) excludeTokens.push(term);
+                else includeTokens.push(term);
+            }
+        }
+
+        const data = normalizedData.filter(t => {
+            if (includeTokens.length > 0 || excludeTokens.length > 0) {
+                const combinedText = `${t.oggetto} ${t.azienda_name} ${t.sede_formatted} ${t.mission_clean} ${t.attivita_clean}`.toLowerCase();
+                
+                for (const inc of includeTokens) {
+                    if (!combinedText.includes(inc)) return false;
+                }
+                
+                for (const exc of excludeTokens) {
+                    if (combinedText.includes(exc)) return false;
+                }
+            }
+
+            if (titleQ && !(t.oggetto||'').toLowerCase().includes(titleQ)) return false;
+            if (compQ && !(t.azienda_name||'').toLowerCase().includes(compQ)) return false;
+            if (locQ && !(t.sede_formatted||'').toLowerCase().includes(locQ)) return false;
+            
+            if (expFilter === 'active'  &&  t.scaduta) return false;
+            if (expFilter === 'expired' && !t.scaduta) return false;
+            
+            if (onlyNew     && !t.is_new)     return false;
+            if (onlyUpdated && !t.is_updated) return false;
+            return true;
+        });
+
+        // ── Apply sorting ──
+        if (currentSort.field) {
+            data.sort((a, b) => {
+                let cmp = 0;
+                switch (currentSort.field) {
+                    case 'azienda': {
+                        const aVal = (a.azienda_name || '').trim();
+                        const bVal = (b.azienda_name || '').trim();
+                        cmp = aVal.localeCompare(bVal, 'it', { numeric: true, sensitivity: 'base' });
+                        break;
+                    }
+                    case 'oggetto': {
+                        const aVal = (a.oggetto || '').trim();
+                        const bVal = (b.oggetto || '').trim();
+                        cmp = aVal.localeCompare(bVal, 'it', { numeric: true, sensitivity: 'base' });
+                        break;
+                    }
+                    case 'sede': {
+                        const aVal = (a.sede_formatted || '').trim();
+                        const bVal = (b.sede_formatted || '').trim();
+                        cmp = aVal.localeCompare(bVal, 'it', { numeric: true, sensitivity: 'base' });
+                        break;
+                    }
+                    case 'data_inserz': {
+                        const tA = a.time_inserz || 0;
+                        const tB = b.time_inserz || 0;
+                        if (tA === 0 && tB !== 0) cmp = 1;
+                        else if (tB === 0 && tA !== 0) cmp = -1;
+                        else cmp = tA - tB;
+                        break;
+                    }
+                    case 'validita': {
+                        const tA = a.time_validita || 0;
+                        const tB = b.time_validita || 0;
+                        if (tA === 0 && tB !== 0) cmp = 1;
+                        else if (tB === 0 && tA !== 0) cmp = -1;
+                        else cmp = tA - tB;
+                        break;
+                    }
+                }
+                return currentSort.direction === 'asc' ? cmp : -cmp;
+            });
+        }
+
+        const favoriteData = data.filter(t => isFavorite(t));
+        const visibleData = onlyFavs ? favoriteData : data;
+
+        favoritesGrid.innerHTML = '';
+        favoritesSection.classList.toggle('hidden', favoriteData.length === 0);
+        favoriteData.forEach((t, i) => {
+            const c = buildCard(t);
+            c.style.animationDelay = `${Math.min(i * 0.03, 0.4)}s`;
+            favoritesGrid.appendChild(c);
+        });
+
+        grid.innerHTML = '';
+        if (visibleData.length === 0) {
+            grid.innerHTML = `<div class="no-results">${onlyFavs ? tr('noFavs') : tr('noResults')}</div>`;
+        } else {
+            visibleData.forEach((tesi, i) => {
+                const c = buildCard(tesi);
+                c.style.animationDelay = `${Math.min(i * 0.04, 0.5)}s`;
+                grid.appendChild(c);
+            });
+        }
+        
+        const statsResultsFn = tr('statsResults');
+        const statsFavsFn    = tr('statsFavs');
+        let sortSuffix = '';
+        if (currentSort.field) {
+            const fieldLabels = {
+                azienda: tr('sortAzienda'),
+                oggetto: tr('sortOggetto'),
+                sede: tr('sortSede'),
+                data_inserz: tr('sortDataIns'),
+                validita: tr('sortValidita')
+            };
+            const dirLabel = currentSort.direction === 'asc' ? tr('sortAsc') : tr('sortDesc');
+            sortSuffix = ` • ${tr('sortLabel')} ${fieldLabels[currentSort.field] || currentSort.field} (${dirLabel})`;
+        }
+
+        statsCounter.textContent = (onlyFavs
+            ? statsFavsFn(visibleData.length, data.length, normalizedData.length)
+            : statsResultsFn(data.length, normalizedData.length, favoriteData.length)) + sortSuffix;
+    }
+
+    // ── Modal ──────────────────────────────────────────────────
+    function openModal(th) {
+        modalCompany.innerHTML = `<i class="fa-regular fa-building"></i> ${esc(th.azienda_name)}`;
+        modalTitle.textContent = th.oggetto;
+
+        const badges = [];
+        if (th.is_new)    badges.push('<span class="badge badge-new">NEW</span>');
+        if (th.is_updated)badges.push('<span class="badge badge-updated">UPDATED</span>');
+        if (th.scaduta)   badges.push('<span class="badge badge-scaduta">Scaduta</span>');
+        modalBadges.innerHTML = badges.join('');
+
+        if (th.link_polito) {
+            modalLink.href = th.link_polito;
+            modalLink.style.display = 'inline-block';
+        } else {
+            modalLink.style.display = 'none';
+        }
+
+        modalBody.innerHTML = `
+            <div class="detail-grid">
+                <div class="detail-section">
+                    <div class="detail-label">${tr('detLocation')}</div>
+                    <div class="detail-value">${esc(th.sede_formatted)}</div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-label">${tr('detDataIns')}</div>
+                    <div class="detail-value">${esc(th.d_inserz || '—')}</div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-label">${tr('detScadenza')}</div>
+                    <div class="detail-value" style="${th.scaduta ? 'color:#f87171' : ''}">${esc(th.d_validita || '—')}</div>
+                </div>
+                ${th.tipologia_contratto ? `
+                <div class="detail-section">
+                    <div class="detail-label">${tr('detTipologia')}</div>
+                    <div class="detail-value">${esc(th.tipologia_contratto)}</div>
+                </div>` : ''}
+            </div>
+
+            ${th.mission_clean ? `
+            <div class="detail-section">
+                <div class="detail-title">${tr('detMission')}</div>
+                <div class="detail-content">${esc(th.mission_clean)}</div>
+            </div>` : ''}
+
+            ${th.attivita_clean ? `
+            <div class="detail-section">
+                <div class="detail-title">${tr('detAttivita')}</div>
+                <div class="detail-content">${esc(th.attivita_clean)}</div>
+            </div>` : ''}
+
+            ${th.requisiti_clean ? `
+            <div class="detail-section">
+                <div class="detail-title">${tr('detRequisiti')}</div>
+                <div class="detail-content">${esc(th.requisiti_clean)}</div>
+            </div>` : ''}
+
+            ${th.retribuzione_clean ? `
+            <div class="detail-section">
+                <div class="detail-title">${tr('detRetribuzione')}</div>
+                <div class="detail-content">${esc(th.retribuzione_clean)}</div>
+            </div>` : ''}
+
+            ${(th.riferimenti_clean || th.email_1_clean || th.email_2_clean || th.web_clean) ? `
+            <div class="detail-section info-cv-section">
+                <div class="info-cv-header">
+                    <div class="info-cv-title"><i class="fa-solid fa-address-card"></i> ${tr('detInfoCv')}</div>
+                    <div class="info-cv-subtitle">${tr('detInfoCvSub')}</div>
+                </div>
+                <div class="info-cv-content">
+                    ${th.riferimenti_clean ? `
+                    <div class="info-cv-left">
+                        ${linkifyText(th.riferimenti_clean)}
+                    </div>` : ''}
+                    <div class="info-cv-right">
+                        ${th.email_1_clean ? `
+                        <div class="info-cv-row">
+                            <span class="info-cv-label">${tr('detEmail')}</span>
+                            <div class="info-cv-val">
+                                <a class="info-cv-link" href="${esc(formatMailUrl(th.email_1_clean, th.oggetto))}">
+                                    <i class="fa-regular fa-envelope"></i> ${esc(th.email_1_clean)}
+                                </a>
+                            </div>
+                        </div>` : ''}
+                        ${th.email_2_clean ? `
+                        <div class="info-cv-row">
+                            <span class="info-cv-label">${tr('detEmail')} 2</span>
+                            <div class="info-cv-val">
+                                <a class="info-cv-link" href="${esc(formatMailUrl(th.email_2_clean, th.oggetto))}">
+                                    <i class="fa-regular fa-envelope"></i> ${esc(th.email_2_clean)}
+                                </a>
+                            </div>
+                        </div>` : ''}
+                        ${th.web_clean ? `
+                        <div class="info-cv-row">
+                            <span class="info-cv-label">${tr('detWeb')}</span>
+                            <div class="info-cv-val">
+                                <a class="info-cv-link" href="${esc(formatWebUrl(th.web_clean))}" target="_blank" rel="noopener">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> ${esc(th.web_clean)}
+                                </a>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>
+            </div>` : ''}
+        `;
+
+        document.body.style.overflow = 'hidden';
+        modalOverlay.style.display = 'flex';
+        requestAnimationFrame(() => modalOverlay.classList.add('visible'));
+    }
+
+    function closeModal() {
+        modalOverlay.classList.remove('visible');
+        setTimeout(() => { modalOverlay.style.display = 'none'; }, 250);
+        document.body.style.overflow = '';
+    }
+
+    modalCloseBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // ── Init ───────────────────────────────────────────────────
+    [fGlobal, fTitle, fCompany, fLocation].forEach(el => el.addEventListener('input', renderGrid));
+    [fScadenza, fPreferiti, fNew, fUpdated].filter(Boolean).forEach(el => el.addEventListener('change', renderGrid));
+
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const field = btn.getAttribute('data-sort');
+            handleSortClick(field);
+        });
+    });
+    const sortResetBtn = document.getElementById('sortResetBtn');
+    if (sortResetBtn) {
+        sortResetBtn.addEventListener('click', resetSort);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        applyLang();  // Apply i18n before rendering
+        if (typeof jobsData === 'undefined' || !Array.isArray(jobsData) || !jobsData.length) {
+            grid.innerHTML = `<div class="no-results" style="color:#ef4444;">${tr('noData')}</div>`;
+            statsCounter.textContent = '';
+            return;
+        }
+
+        normalizedData = jobsData.map(normalizeRecord).filter(t => t.oggetto);
+        
+        loadFavorites();
+        updateSortUI();
+        renderGrid();
+    });
+    </script>
+</body>
+</html>

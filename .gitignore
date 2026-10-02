@@ -9,6 +9,7 @@ cookie.txt
 
 # Local generated scraping cache
 dettagli_html/
+dettagli_jobs/
 
 # IDE optimization folder
 .idea/
@@ -22,3 +23,12 @@ procedures/
 
 # thesis data should not be loaded in the repository
 data.js
+
+# jobs data should not be loaded in the repository
+jobs_data.js
+
+# Test / exploratory files
+test_*
+test_jobs.py
+test_job.html
+test_js.js
