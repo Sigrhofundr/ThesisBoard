@@ -96,6 +96,16 @@ When run, the script checks local cache `dettagli_jobs/corsi.json` (or fetches f
 
 Then open `index_jobs.html` in your browser.
 
+### Removing downloaded data
+To remove the generated dataset and local cache for one domain, run:
+
+```bash
+python pulisci_dati.py tesi
+python pulisci_dati.py jobs
+```
+
+Without an argument, the script presents a menu. It always asks for the exact confirmation `ELIMINA`; use `--yes` only in automated scripts. Use `--dry-run` to preview the files that would be removed.
+
 ## UI Features
 
 ### Thesis UI (`index.html`)
